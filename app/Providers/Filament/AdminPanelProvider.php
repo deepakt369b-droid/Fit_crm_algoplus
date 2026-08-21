@@ -4,6 +4,7 @@ namespace App\Providers\Filament;
 
 use App\Filament\Pages\Dashboard;
 use App\Filament\Pages\Settings;
+use App\Filament\Resources\Devices\DeviceResource;
 use App\Filament\Resources\Enquiries\EnquiryResource;
 use App\Filament\Resources\Expenses\ExpenseResource;
 use App\Filament\Resources\FollowUps\FollowUpResource;
@@ -168,6 +169,10 @@ class AdminPanelProvider extends PanelProvider
             ...SubscriptionResource::getNavigationItems(),
         ];
 
+        $accessControl = [
+            ...DeviceResource::getNavigationItems(),
+        ];
+
         return $builder
             ->groups([
                 NavigationGroup::make(__('app.navigation.groups.sales'))
@@ -183,6 +188,11 @@ class AdminPanelProvider extends PanelProvider
                 NavigationGroup::make(__('app.navigation.groups.billing'))
                     ->icon('heroicon-o-document-text')
                     ->items($billing)
+                    ->collapsed(false),
+
+                NavigationGroup::make(__('app.navigation.groups.access_control'))
+                    ->icon('heroicon-o-qr-code')
+                    ->items($accessControl)
                     ->collapsed(false),
 
                 NavigationGroup::make(__('app.navigation.groups.administration'))

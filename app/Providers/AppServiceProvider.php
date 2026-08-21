@@ -229,6 +229,16 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('api-login', function (Request $request): Limit {
             return Limit::perMinute(10)->by((string) $request->ip());
         });
+
+        RateLimiter::for('device-pairing', function (Request $request): Limit {
+            return Limit::perMinute(10)->by((string) $request->ip());
+        });
+
+        RateLimiter::for('attendance', function (Request $request): Limit {
+            $key = $request->user()?->getAuthIdentifier() ?? $request->ip();
+
+            return Limit::perMinute(120)->by(Data::string($key));
+        });
     }
 
     /**

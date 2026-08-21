@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Contracts\TenantContext;
+use App\Models\Device;
 use App\Models\Gym;
 use App\Models\User;
 use Filament\Facades\Filament;
@@ -15,9 +16,9 @@ use Throwable;
  * Resolution order:
  *  1. Console/scheduled commands (outside of tests) run across every branch.
  *  2. Inside a Filament panel with an active tenant, that tenant is the branch.
- *  3. For an authenticated API/panel user, a device token's own gym (see the
- *     attendance gate integration) takes precedence, then the user's home
- *     branch.
+ *  3. For an authenticated API request — a staff user or a paired gate
+ *     Device (see the attendance gate integration; both are Sanctum
+ *     tokenables) — that authenticatable's own branch.
  *  4. Otherwise (e.g. an anonymous login request), no branch is assumed —
  *     lookups run unscoped, since a user's email is globally unique.
  */
@@ -35,7 +36,7 @@ class ResolvedTenantContext implements TenantContext
             return $panelTenantId;
         }
 
-        return $this->authenticatedUserGymId();
+        return $this->authenticatedGymId();
     }
 
     private function panelTenantId(): ?int
@@ -49,24 +50,16 @@ class ResolvedTenantContext implements TenantContext
         return $tenant instanceof Gym ? $tenant->id : null;
     }
 
-    private function authenticatedUserGymId(): ?int
+    private function authenticatedGymId(): ?int
     {
-        $user = Auth::user();
+        $authenticatable = Auth::user();
 
-        if (! $user instanceof User) {
+        if (! $authenticatable instanceof User && ! $authenticatable instanceof Device) {
             return null;
         }
 
-        $token = method_exists($user, 'currentAccessToken') ? $user->currentAccessToken() : null;
+        $gymId = $authenticatable->getAttribute('gym_id');
 
-        if ($token !== null) {
-            $tokenGymId = $token->getAttribute('gym_id');
-
-            if ($tokenGymId !== null) {
-                return (int) $tokenGymId;
-            }
-        }
-
-        return $user->gym_id !== null ? (int) $user->gym_id : null;
+        return $gymId !== null ? (int) $gymId : null;
     }
 }

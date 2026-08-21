@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AnalyticsController;
+use App\Http\Controllers\Api\V1\AttendanceController;
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\DevicesController;
 use App\Http\Controllers\Api\V1\EnquiriesController;
 use App\Http\Controllers\Api\V1\EnquiryFollowUpsController;
 use App\Http\Controllers\Api\V1\ExpensesController;
@@ -18,6 +20,7 @@ use App\Http\Controllers\Api\V1\SubscriptionsController;
 use App\Http\Controllers\Api\V1\UsersController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Laravel\Sanctum\Http\Middleware\CheckAbilities;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -27,6 +30,19 @@ Route::prefix('v1')
     ->group(function (): void {
         Route::post('/auth/login', [AuthController::class, 'login'])
             ->middleware('throttle:api-login');
+
+        Route::post('/devices/pair', [DevicesController::class, 'pair'])
+            ->middleware('throttle:device-pairing');
+
+        // Gate hardware: authenticates as a Device (not a User), scoped to
+        // the 'attendance:write' Sanctum ability only.
+        Route::middleware(['auth:sanctum', CheckAbilities::class.':attendance:write', 'throttle:attendance'])
+            ->group(function (): void {
+                Route::post('/devices/heartbeat', [DevicesController::class, 'heartbeat']);
+                Route::post('/devices/enrol', [DevicesController::class, 'enrol']);
+                Route::post('/attendance/check-in', [AttendanceController::class, 'checkIn']);
+                Route::post('/attendance/sync', [AttendanceController::class, 'sync']);
+            });
 
         Route::middleware('auth:sanctum')
             ->group(function (): void {
@@ -92,5 +108,7 @@ Route::prefix('v1')
                     ->parameters(['follow-ups' => 'followUp']);
                 Route::post('/follow-ups/{followUp}/restore', [FollowUpsController::class, 'restore']);
                 Route::delete('/follow-ups/{followUp}/force', [FollowUpsController::class, 'forceDelete']);
+
+                Route::get('/attendance', [AttendanceController::class, 'index']);
             });
     });

@@ -2,6 +2,7 @@
 
 namespace App\Services\Api;
 
+use App\Services\Api\Schemas\AttendanceSchema;
 use App\Services\Api\Schemas\EnquirySchema;
 use App\Services\Api\Schemas\ExpenseSchema;
 use App\Services\Api\Schemas\FollowUpSchema;
@@ -36,6 +37,7 @@ final class ResourceQueryRules
         'expenses' => ExpenseSchema::class,
         'enquiries' => EnquirySchema::class,
         'follow-ups' => FollowUpSchema::class,
+        'attendance' => AttendanceSchema::class,
     ];
 
     /**
