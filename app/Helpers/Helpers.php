@@ -53,6 +53,16 @@ class Helpers
         return app(SettingsRepository::class)->get();
     }
 
+    /**
+     * Whether a WhatsApp marketing module is enabled for the current
+     * branch (superadmin-controlled, per-branch — see
+     * NormalizesSettings::normalize()'s 'marketing' section).
+     */
+    public static function marketingFeatureEnabled(string $feature): bool
+    {
+        return (bool) data_get(self::getSettings(), "marketing.{$feature}", false);
+    }
+
     public static function appTimezone(): string
     {
         return AppConfig::timezone();

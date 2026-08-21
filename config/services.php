@@ -35,4 +35,14 @@ return [
         ],
     ],
 
+    'whatsapp' => [
+        'app_secret' => env('WHATSAPP_APP_SECRET'),
+        'verify_token' => env('WHATSAPP_VERIFY_TOKEN'),
+        // Meta's Graph API version increments regularly; check
+        // developers.facebook.com/docs/graph-api/changelog before
+        // assuming this is still current.
+        'api_version' => env('WHATSAPP_API_VERSION', 'v21.0'),
+        'base_url' => env('WHATSAPP_API_BASE_URL', 'https://graph.facebook.com'),
+    ],
+
 ];

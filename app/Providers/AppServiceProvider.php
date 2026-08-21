@@ -239,6 +239,13 @@ class AppServiceProvider extends ServiceProvider
 
             return Limit::perMinute(120)->by(Data::string($key));
         });
+
+        // Generous and IP-agnostic: Meta delivers webhook events from a
+        // shared pool of IPs, not one client, so throttling by IP (like
+        // the 'api' limiter) would be the wrong shape here.
+        RateLimiter::for('whatsapp-webhook', function (Request $request): Limit {
+            return Limit::perMinute(600);
+        });
     }
 
     /**

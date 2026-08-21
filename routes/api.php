@@ -18,13 +18,25 @@ use App\Http\Controllers\Api\V1\ServicesController;
 use App\Http\Controllers\Api\V1\SettingsController;
 use App\Http\Controllers\Api\V1\SubscriptionsController;
 use App\Http\Controllers\Api\V1\UsersController;
-use Illuminate\Http\Request;
+use App\Http\Controllers\WhatsappWebhookController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Http\Middleware\CheckAbilities;
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+// Laravel's default scaffolding route. Kept at the same path for anyone
+// depending on it, but converted from a closure to a controller method:
+// php artisan route:cache hard-fails on any closure-based route ("Unable
+// to prepare route ... for serialization. Uses Closure."), and the
+// deploy script (scripts/coolify-deploy.sh) runs route:cache.
+Route::get('/user', [AuthController::class, 'me'])->middleware('auth:sanctum');
+
+// Meta calls these directly — no bearer token, authenticity comes from
+// the X-Hub-Signature-256 check inside the controller instead. Two
+// explicit routes (not Route::match with a closure) because closure
+// routes can't be cached by `route:cache`, which the deploy script runs.
+Route::get('/webhooks/whatsapp', [WhatsappWebhookController::class, 'verify'])
+    ->middleware('throttle:whatsapp-webhook');
+Route::post('/webhooks/whatsapp', [WhatsappWebhookController::class, 'handle'])
+    ->middleware('throttle:whatsapp-webhook');
 
 Route::prefix('v1')
     ->group(function (): void {

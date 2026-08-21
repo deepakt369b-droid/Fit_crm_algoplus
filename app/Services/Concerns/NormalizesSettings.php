@@ -25,11 +25,28 @@ trait NormalizesSettings
             'subscriptions',
             'payments',
             'notifications',
+            'marketing',
         ] as $key) {
             if (! array_key_exists($key, $settings) || ! is_array($settings[$key])) {
                 $settings[$key] = [];
             }
         }
+
+        /** @var array<string, mixed> $marketing */
+        $marketing = $settings['marketing'];
+        foreach ([
+            'inbox' => true,
+            'broadcasts' => false,
+            'automations' => false,
+            'pipelines' => false,
+            'ai_assistant' => false,
+            'knowledge_base' => false,
+        ] as $key => $default) {
+            if (! array_key_exists($key, $marketing) || ! is_bool($marketing[$key])) {
+                $marketing[$key] = $default;
+            }
+        }
+        $settings['marketing'] = $marketing;
 
         /** @var array<string, mixed> $general */
         $general = $settings['general'];

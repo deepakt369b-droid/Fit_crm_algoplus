@@ -91,8 +91,40 @@ class Settings extends Page implements HasForms
                     $this->chargesTab(),
                     $this->expensesTab(),
                     $this->subscriptionsTab(),
+                    ...(auth()->user()?->hasRole('super_admin') ? [$this->marketingTab()] : []),
                 ]),
         ];
+    }
+
+    /**
+     * Marketing (WhatsApp) feature toggles — superadmin-only. Branch
+     * admins never see this tab; the flags themselves still live in this
+     * branch's own settings row, so a superadmin switched into a branch's
+     * tenant context is toggling that specific branch.
+     */
+    private function marketingTab(): Tab
+    {
+        return Tab::make(__('app.settings.tabs.marketing'))
+            ->icon('heroicon-m-chat-bubble-left-right')
+            ->schema([
+                Toggle::make('marketing.inbox')
+                    ->label(__('app.whatsapp.feature_inbox')),
+                Toggle::make('marketing.broadcasts')
+                    ->label(__('app.whatsapp.feature_broadcasts'))
+                    ->helperText(__('app.whatsapp.feature_not_yet_available')),
+                Toggle::make('marketing.automations')
+                    ->label(__('app.whatsapp.feature_automations'))
+                    ->helperText(__('app.whatsapp.feature_not_yet_available')),
+                Toggle::make('marketing.pipelines')
+                    ->label(__('app.whatsapp.feature_pipelines'))
+                    ->helperText(__('app.whatsapp.feature_not_yet_available')),
+                Toggle::make('marketing.ai_assistant')
+                    ->label(__('app.whatsapp.feature_ai_assistant'))
+                    ->helperText(__('app.whatsapp.feature_not_yet_available')),
+                Toggle::make('marketing.knowledge_base')
+                    ->label(__('app.whatsapp.feature_knowledge_base'))
+                    ->helperText(__('app.whatsapp.feature_not_yet_available')),
+            ]);
     }
 
     /**

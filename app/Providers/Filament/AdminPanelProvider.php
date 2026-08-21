@@ -14,6 +14,10 @@ use App\Filament\Resources\Plans\PlanResource;
 use App\Filament\Resources\Services\ServiceResource;
 use App\Filament\Resources\Subscriptions\SubscriptionResource;
 use App\Filament\Resources\Users\UserResource;
+use App\Filament\Resources\WhatsappContacts\WhatsappContactResource;
+use App\Filament\Resources\WhatsappConversations\WhatsappConversationResource;
+use App\Filament\Resources\WhatsappPhoneNumbers\WhatsappPhoneNumberResource;
+use App\Filament\Resources\WhatsappTemplates\WhatsappTemplateResource;
 use App\Http\Middleware\SetAppLocale;
 use App\Models\Gym;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
@@ -173,6 +177,13 @@ class AdminPanelProvider extends PanelProvider
             ...DeviceResource::getNavigationItems(),
         ];
 
+        $marketing = [
+            ...WhatsappConversationResource::getNavigationItems(),
+            ...WhatsappContactResource::getNavigationItems(),
+            ...WhatsappTemplateResource::getNavigationItems(),
+            ...WhatsappPhoneNumberResource::getNavigationItems(),
+        ];
+
         return $builder
             ->groups([
                 NavigationGroup::make(__('app.navigation.groups.sales'))
@@ -193,6 +204,11 @@ class AdminPanelProvider extends PanelProvider
                 NavigationGroup::make(__('app.navigation.groups.access_control'))
                     ->icon('heroicon-o-qr-code')
                     ->items($accessControl)
+                    ->collapsed(false),
+
+                NavigationGroup::make(__('app.navigation.groups.marketing'))
+                    ->icon('heroicon-o-chat-bubble-left-right')
+                    ->items($marketing)
                     ->collapsed(false),
 
                 NavigationGroup::make(__('app.navigation.groups.administration'))
