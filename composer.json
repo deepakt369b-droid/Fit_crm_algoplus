@@ -1,11 +1,12 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "algoplus/fitcrm",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
+    "description": "FitCRM — gym & fitness club management platform by Algo Plus.",
     "keywords": [
         "laravel",
-        "framework"
+        "fitcrm",
+        "gym-management"
     ],
     "license": "MIT",
     "require": {

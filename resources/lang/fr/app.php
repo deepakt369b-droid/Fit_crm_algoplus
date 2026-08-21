@@ -9,6 +9,9 @@ return [
         'the_beginning' => 'le début',
         'today' => 'aujourd\'hui',
     ],
+    'branding' => [
+        'attribution' => 'FitCRM — Propulsé par Algo Plus',
+    ],
     'fields' => [
         'id' => 'ID',
         'photo' => 'Photo',
@@ -376,7 +379,7 @@ return [
             'tokens_receipt' => 'Jetons: {invoice_number}, {status}, {total}, {paid}, {due}, {gym_name}, {member_name}, {payment_amount}',
         ],
         'placeholders' => [
-            'prefix' => 'GY',
+            'prefix' => 'FIT',
             'invoice_email_subject' => 'Facture {invoice_number} - {status}',
             'receipt_email_subject' => 'Paiement reçu - {invoice_number}',
         ],

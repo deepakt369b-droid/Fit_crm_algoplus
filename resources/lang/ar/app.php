@@ -9,6 +9,9 @@ return [
         'the_beginning' => 'البداية',
         'today' => 'اليوم',
     ],
+    'branding' => [
+        'attribution' => 'FitCRM — بدعم من Algo Plus',
+    ],
     'fields' => [
         'id' => 'المعرف',
         'photo' => 'صورة',
@@ -376,7 +379,7 @@ return [
             'tokens_receipt' => 'الرموز: {invoice_number}, {status}, {total}, {paid}, {due}, {gym_name}, {member_name}, {payment_amount}',
         ],
         'placeholders' => [
-            'prefix' => 'GY',
+            'prefix' => 'FIT',
             'invoice_email_subject' => 'فاتورة {invoice_number} - {status}',
             'receipt_email_subject' => 'تم استلام الدفع - {invoice_number}',
         ],

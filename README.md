@@ -1,9 +1,13 @@
-<p align="center"><img width="160" src=".github/assets/logo.svg"></p>
+# FitCRM
 
-![Gymie](.github/assets/banner.png)
+FitCRM is a Laravel-based gym & fitness club management platform, developed and powered by
+[Algo Plus](https://algoplusit.com).
 
 ## Overview
-Laravel based web application for gym & club management. Currently being used by many fitness centers. For more information, visit - https://www.gymie.in
+
+FitCRM covers day-to-day gym operations — members, plans, subscriptions, invoicing, expenses,
+enquiries and follow-ups — through a Filament admin panel, plus a versioned JSON API for
+integrations.
 
 ## Requirements
 
@@ -17,20 +21,18 @@ Laravel based web application for gym & club management. Currently being used by
 
 ## Installation
 
-To set up Gymie, follow these steps:
+To set up FitCRM, follow these steps:
 
 ### 1. Clone the Repository
 
-Clone the repository to your local system:
-
 ```bash
-git clone git@github.com:lubusIN/gymie.git
+git clone <your-repository-url> fitcrm
 ```
 
 ### 2. Go to folder
 
 ```bash
-cd gymie
+cd fitcrm
 ```
 
 ### 3. Install dependencies
@@ -60,7 +62,7 @@ This will:
 -   Update other relevant configuration values.
 -   Set your application URL:
     ```env
-    APP_URL=https://gymie.test
+    APP_URL=https://fitcrm.test
     ```
 
 ### 6. Database Setup
@@ -162,7 +164,7 @@ php artisan schedule:work
 
 ## API (JSON, v1)
 
-Gymie ships with a versioned JSON API under `routes/api.php` for integrations.
+FitCRM ships with a versioned JSON API under `routes/api.php` for integrations.
 
 ### Authentication (Sanctum Bearer Tokens)
 
@@ -209,14 +211,11 @@ Allowlists (searchable/sortable/includes/filters) are defined per resource in:
 
 -   `app/Services/Api/Schemas/*Schema.php` via `::queryRules()`
 
-## Meet Your Artisans
+## About Algo Plus
 
-[LUBUS](https://lubus.in/?utm_source=github&utm_medium=open-source&utm_campaign=laravel-gymie-v3) is a web design agency based in Mumbai.
-
-<a href="https://cal.com/lubus">
-<img src="https://raw.githubusercontent.com/lubusIN/.github/refs/heads/main/profile/banner.png" />
-</a>
+FitCRM is developed and powered by [Algo Plus](https://algoplusit.com).
+For support, contact support@algoplusit.com.
 
 ## License
 
-Gymie is an open-sourced saas licensed under the [MIT license](LICENSE)
+FitCRM is licensed under the [MIT license](LICENSE).

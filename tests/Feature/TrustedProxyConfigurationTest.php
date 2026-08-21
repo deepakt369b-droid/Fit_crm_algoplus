@@ -14,7 +14,7 @@ afterEach(function (): void {
 it('does not trust forwarded protocol headers by default', function (): void {
     config()->set('trustedproxy.proxies');
 
-    $request = Request::create('http://gymie.test', server: [
+    $request = Request::create('http://fitcrm.test', server: [
         'REMOTE_ADDR' => '203.0.113.10',
         'HTTP_X_FORWARDED_PROTO' => 'https',
     ]);
@@ -27,7 +27,7 @@ it('does not trust forwarded protocol headers by default', function (): void {
 it('trusts forwarded protocol headers from configured proxies', function (): void {
     config()->set('trustedproxy.proxies', '203.0.113.10');
 
-    $request = Request::create('http://gymie.test', server: [
+    $request = Request::create('http://fitcrm.test', server: [
         'REMOTE_ADDR' => '203.0.113.10',
         'HTTP_X_FORWARDED_PROTO' => 'https',
     ]);

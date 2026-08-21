@@ -5,5 +5,5 @@ it('renders the admin login page', function (): void {
 
     $this->get(route('filament.admin.auth.login'))
         ->assertOk()
-        ->assertSee('Gymie');
+        ->assertSee('FitCRM');
 });

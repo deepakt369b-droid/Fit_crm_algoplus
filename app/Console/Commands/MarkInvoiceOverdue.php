@@ -13,7 +13,7 @@ class MarkInvoiceOverdue extends Command
      *
      * @var string
      */
-    protected $signature = 'gymie:invoices {--mark-overdue : Mark invoices as overdue based on due date}';
+    protected $signature = 'fitcrm:invoices {--mark-overdue : Mark invoices as overdue based on due date}';
 
     /**
      * The console command description.

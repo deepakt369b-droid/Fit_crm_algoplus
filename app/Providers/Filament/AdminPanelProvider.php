@@ -63,7 +63,7 @@ class AdminPanelProvider extends PanelProvider
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->login()
             ->passwordReset()
-            ->brandName('Gymie')
+            ->brandName('FitCRM')
             ->brandLogo('/images/logo.svg')
             ->darkModeBrandLogo('/images/logo-dark-mode.svg')
             ->brandLogoHeight('2.5rem')
@@ -105,7 +105,26 @@ class AdminPanelProvider extends PanelProvider
                 fn (): HtmlString => new HtmlString(
                     Blade::render('@livewire(\\App\\Filament\\Livewire\\LocaleSwitcher::class, [], key(\'locale-switcher\'))')
                 ),
+            )
+            ->renderHook(
+                PanelsRenderHook::FOOTER,
+                fn (): HtmlString => $this->brandAttributionHtml(),
+            )
+            ->renderHook(
+                PanelsRenderHook::SIMPLE_PAGE_END,
+                fn (): HtmlString => $this->brandAttributionHtml(),
             );
+    }
+
+    /**
+     * Render the "Powered by Algo Plus" attribution shown in the panel footer
+     * and on simple-layout pages (login, password reset).
+     */
+    protected function brandAttributionHtml(): HtmlString
+    {
+        return new HtmlString(Blade::render(
+            '<p class="fi-footer text-center text-sm text-gray-500 dark:text-gray-400 py-4">{{ __(\'app.branding.attribution\') }}</p>'
+        ));
     }
 
     /**

@@ -23,15 +23,15 @@ class MemberCodeGeneratorTest extends TestCase
         // Prevent the Member::saving listener (so updateLastNumber() never writes disk)
         Member::flushEventListeners();
 
-        // Override settings in-memory so we always start at "GY-1"
+        // Override settings in-memory so we always start at "FIT-1"
         Helpers::setTestSettingsOverride([
             'member' => ['prefix' => '', 'last_number' => ''],
         ]);
     }
 
     #[Test]
-    #[TestDox('Step 1: Given no existing members → returns GY-1')]
-    public function noExistingMembersReturnsGY1(): void
+    #[TestDox('Step 1: Given no existing members → returns FIT-1')]
+    public function noExistingMembersReturnsFit1(): void
     {
         $next = Helpers::generateLastNumber(
             'member',
@@ -41,21 +41,21 @@ class MemberCodeGeneratorTest extends TestCase
         );
 
         $this->assertSame(
-            'GY-1',
+            'FIT-1',
             $next,
-            'When there are no members at all, the next number should be GY-1'
+            'When there are no members at all, the next number should be FIT-1'
         );
     }
 
     #[Test]
-    #[TestDox('Step 2: Given two members in the fiscal year → returns GY-3')]
-    public function twoInRangeMembersReturnsGY3(): void
+    #[TestDox('Step 2: Given two members in the fiscal year → returns FIT-3')]
+    public function twoInRangeMembersReturnsFit3(): void
     {
         Member::factory()->create([
-            'code' => 'GY-1'
+            'code' => 'FIT-1'
         ]);
         Member::factory()->create([
-            'code' => 'GY-2'
+            'code' => 'FIT-2'
         ]);
 
         $next = Helpers::generateLastNumber(
@@ -66,19 +66,19 @@ class MemberCodeGeneratorTest extends TestCase
         );
 
         $this->assertSame(
-            'GY-3',
+            'FIT-3',
             $next,
-            'With two in-year members (GY-1, GY-2), the next should be GY-3'
+            'With two in-year members (FIT-1, FIT-2), the next should be FIT-3'
         );
     }
 
     #[Test]
-    #[TestDox('Step 3: Given only out-of-range members → returns GY-1')]
-    public function outOfRangeMembersReturnsGY1(): void
+    #[TestDox('Step 3: Given only out-of-range members → returns FIT-1')]
+    public function outOfRangeMembersReturnsFit1(): void
     {
         // This one is dated before the FY start, so should be ignored
         Member::factory()->create([
-            'code' => 'GY-1',
+            'code' => 'FIT-1',
             'created_at' => Carbon::create(2025, 3, 31, 23, 59, 59),
         ]);
 
@@ -90,7 +90,7 @@ class MemberCodeGeneratorTest extends TestCase
         );
 
         $this->assertSame(
-            'GY-1',
+            'FIT-1',
             $next,
             'An member before the fiscal-year cutoff should not bump the counter'
         );

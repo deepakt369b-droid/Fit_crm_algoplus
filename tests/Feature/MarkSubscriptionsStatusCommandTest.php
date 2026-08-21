@@ -63,7 +63,7 @@ class MarkSubscriptionsStatusCommandTest extends TestCase
             'status' => 'ongoing',
         ]);
 
-        $this->artisan('gymie:subscriptions', [
+        $this->artisan('fitcrm:subscriptions', [
             '--mark-expired' => true,
             '--mark-expiring' => true,
         ])

@@ -33,7 +33,7 @@
 
                 <tr>
                     <td style="padding: 14px 22px; background: #f9fafb; font-size: 11px; color: #6b7280;">
-                        Sent by {{ $gymName }} via Gymie.
+                        Sent by {{ $gymName }} via FitCRM — Powered by Algo Plus.
                     </td>
                 </tr>
             </table>

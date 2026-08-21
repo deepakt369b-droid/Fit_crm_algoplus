@@ -14,7 +14,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->seedWorldData();
-        $this->callConfiguredSeeders('gymie.seeding.before');
+        $this->callConfiguredSeeders('fitcrm.seeding.before');
 
         $this->call([
             ShieldSeeder::class,
@@ -29,7 +29,7 @@ class DatabaseSeeder extends Seeder
             ExpenseSeeder::class,
         ]);
 
-        $this->callConfiguredSeeders('gymie.seeding.after');
+        $this->callConfiguredSeeders('fitcrm.seeding.after');
 
         if (app()->environment(['local', 'development'])) {
             $this->call(DashboardDemoSeeder::class);

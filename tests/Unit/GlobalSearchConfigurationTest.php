@@ -56,7 +56,7 @@ test('resources provide informative global search titles and details', function 
 
     $member = new Member([
         'name' => 'John Doe',
-        'code' => 'GY-1',
+        'code' => 'FIT-1',
         'email' => 'john@example.com',
         'contact' => '+1 555-0000',
     ]);
@@ -64,7 +64,7 @@ test('resources provide informative global search titles and details', function 
     expect((string) MemberResource::getGlobalSearchResultTitle($member))->toBe('John Doe');
     expect(MemberResource::getGlobalSearchResultDetails($member))
         ->toMatchArray([
-            __('app.fields.code') => 'GY-1',
+            __('app.fields.code') => 'FIT-1',
             __('app.fields.email') => 'john@example.com',
             __('app.fields.contact') => '+1 555-0000',
         ]);
@@ -95,14 +95,14 @@ test('resources provide informative global search titles and details', function 
     expect(SubscriptionResource::getGlobalSearchResultTitle($subscription))->toBe('John Doe — Gold');
 
     $invoice = new Invoice([
-        'number' => 'GY-1',
+        'number' => 'FIT-1',
         'date' => '2026-03-01',
         'status' => Status::Issued,
         'total_amount' => 120.50,
     ]);
     $invoice->setRelation('subscription', $subscription);
 
-    expect((string) InvoiceResource::getGlobalSearchResultTitle($invoice))->toBe('GY-1');
+    expect((string) InvoiceResource::getGlobalSearchResultTitle($invoice))->toBe('FIT-1');
     expect(InvoiceResource::getGlobalSearchResultDetails($invoice))
         ->toHaveKey(__('app.fields.member'))
         ->toHaveKey(__('app.fields.invoice_date'))

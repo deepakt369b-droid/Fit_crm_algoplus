@@ -43,7 +43,7 @@ test('dashboard demo seeder avoids invoice number collisions with trashed invoic
         ->create();
 
     $trashedInvoice = Invoice::query()->create([
-        'number' => 'GY-1',
+        'number' => 'FIT-1',
         'subscription_id' => $subscriptionB->id,
         'date' => now()->toDateString(),
         'due_date' => now()->addDays(7)->toDateString(),
@@ -64,7 +64,7 @@ test('dashboard demo seeder avoids invoice number collisions with trashed invoic
 
     $invoiceA = Invoice::query()->where('subscription_id', $subscriptionA->id)->firstOrFail();
 
-    expect((string) $invoiceA->number)->not->toBe('GY-1');
+    expect((string) $invoiceA->number)->not->toBe('FIT-1');
 });
 
 test('dashboard demo seeder does not queue invoice emails', function (): void {

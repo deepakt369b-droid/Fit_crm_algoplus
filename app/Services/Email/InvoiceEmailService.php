@@ -81,7 +81,7 @@ final class InvoiceEmailService
 
         $this->withLocaleFromSettings($settings, function () use ($settings, $invoice, $toEmail, $note, $memberName): void {
             $gym = $this->gymIdentityFromSettings($settings);
-            $gymName = $gym['name'] !== '' ? $gym['name'] : 'Gymie';
+            $gymName = $gym['name'] !== '' ? $gym['name'] : 'FitCRM';
             $subjectTemplate = Data::string(data_get($settings,
                 'notifications.email.invoice_subject_template',
                 'Invoice {invoice_number} - {status}',
@@ -138,7 +138,7 @@ final class InvoiceEmailService
 
         $this->withLocaleFromSettings($settings, function () use ($settings, $invoice, $transaction, $toEmail, $note, $memberName): void {
             $gym = $this->gymIdentityFromSettings($settings);
-            $gymName = $gym['name'] !== '' ? $gym['name'] : 'Gymie';
+            $gymName = $gym['name'] !== '' ? $gym['name'] : 'FitCRM';
             $subjectTemplate = Data::string(data_get($settings,
                 'notifications.email.receipt_subject_template',
                 'Payment received - {invoice_number}',

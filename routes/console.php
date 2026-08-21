@@ -11,34 +11,34 @@ Artisan::command('inspire', function () {
 /**
  * Scheduler.
  *
- * When tenancy is enabled, run maintenance across all gyms.
+ * When tenancy is enabled, run maintenance across all branches.
  * Otherwise, run the single-tenant commands.
  */
-if ((bool) config('gymie-tenancy.enabled', false)) {
+if ((bool) config('fitcrm-tenancy.enabled', false)) {
     // Mark subscriptions expired every day at 00:00
-    Schedule::command('gymie:tenants:subscriptions')
-        ->name('gymie-tenants-subscriptions')
+    Schedule::command('fitcrm:tenants:subscriptions')
+        ->name('fitcrm-tenants-subscriptions')
         ->withoutOverlapping(30)
         ->onOneServer()
         ->dailyAt('00:00');
 
     // Mark invoices overdue every day at 00:00
-    Schedule::command('gymie:tenants:invoices --mark-overdue')
-        ->name('gymie-tenants-invoices-overdue')
+    Schedule::command('fitcrm:tenants:invoices --mark-overdue')
+        ->name('fitcrm-tenants-invoices-overdue')
         ->withoutOverlapping(30)
         ->onOneServer()
         ->dailyAt('00:00');
 } else {
     // Mark subscriptions expired every day at 00:00
-    Schedule::command('gymie:subscriptions')
-        ->name('gymie-subscriptions')
+    Schedule::command('fitcrm:subscriptions')
+        ->name('fitcrm-subscriptions')
         ->withoutOverlapping(30)
         ->onOneServer()
         ->dailyAt('00:00');
 
     // Mark invoices overdue every day at 00:00
-    Schedule::command('gymie:invoices --mark-overdue')
-        ->name('gymie-invoices-overdue')
+    Schedule::command('fitcrm:invoices --mark-overdue')
+        ->name('fitcrm-invoices-overdue')
         ->withoutOverlapping(30)
         ->onOneServer()
         ->dailyAt('00:00');

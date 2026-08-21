@@ -70,7 +70,7 @@ class AppServiceProvider extends ServiceProvider
         $this->configureScrambleApiDocs();
 
         FilamentAsset::register([
-            Css::make('gymie-styles', __DIR__.'/../../resources/css/custom.css'),
+            Css::make('fitcrm-styles', __DIR__.'/../../resources/css/custom.css'),
         ]);
 
         /**

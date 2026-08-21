@@ -25,15 +25,15 @@ class InvoiceNumberGeneratorTest extends TestCase
         Invoice::flushEventListeners();
         Member::flushEventListeners();
 
-        // Override settings in-memory so we always start at "GY-1"
+        // Override settings in-memory so we always start at "FIT-1"
         Helpers::setTestSettingsOverride([
             'invoice' => ['prefix' => '', 'last_number' => ''],
         ]);
     }
 
     #[Test]
-    #[TestDox('Step 1: Given no existing invoices → returns GY-1')]
-    public function noExistingInvoicesReturnsGY1(): void
+    #[TestDox('Step 1: Given no existing invoices → returns FIT-1')]
+    public function noExistingInvoicesReturnsFit1(): void
     {
         $next = Helpers::generateLastNumber(
             'invoice',
@@ -42,22 +42,22 @@ class InvoiceNumberGeneratorTest extends TestCase
         );
 
         $this->assertSame(
-            'GY-1',
+            'FIT-1',
             $next,
-            'When there are no invoices at all, the next number should be GY-1'
+            'When there are no invoices at all, the next number should be FIT-1'
         );
     }
 
     #[Test]
-    #[TestDox('Step 2: Given two invoices in the fiscal year → returns GY-3')]
-    public function twoInRangeInvoicesReturnsGY3(): void
+    #[TestDox('Step 2: Given two invoices in the fiscal year → returns FIT-3')]
+    public function twoInRangeInvoicesReturnsFit3(): void
     {
         Invoice::factory()->create([
-            'number' => 'GY-1',
+            'number' => 'FIT-1',
             'date'   => '2025-04-01',
         ]);
         Invoice::factory()->create([
-            'number' => 'GY-2',
+            'number' => 'FIT-2',
             'date'   => '2025-05-01',
         ]);
 
@@ -68,19 +68,19 @@ class InvoiceNumberGeneratorTest extends TestCase
         );
 
         $this->assertSame(
-            'GY-3',
+            'FIT-3',
             $next,
-            'With two in-year invoices (GY-1, GY-2), the next should be GY-3'
+            'With two in-year invoices (FIT-1, FIT-2), the next should be FIT-3'
         );
     }
 
     #[Test]
-    #[TestDox('Step 3: Given only out-of-range invoices → returns GY-1')]
-    public function outOfRangeInvoicesReturnsGY1(): void
+    #[TestDox('Step 3: Given only out-of-range invoices → returns FIT-1')]
+    public function outOfRangeInvoicesReturnsFit1(): void
     {
         // This one is dated before the FY start, so should be ignored
         Invoice::factory()->create([
-            'number' => 'GY-1',
+            'number' => 'FIT-1',
             'date'   => '2024-03-15',
         ]);
 
@@ -91,7 +91,7 @@ class InvoiceNumberGeneratorTest extends TestCase
         );
 
         $this->assertSame(
-            'GY-1',
+            'FIT-1',
             $next,
             'An invoice before the fiscal-year cutoff should not bump the counter'
         );

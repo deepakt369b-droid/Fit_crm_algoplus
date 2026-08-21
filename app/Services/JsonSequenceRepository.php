@@ -48,7 +48,7 @@ class JsonSequenceRepository implements SequenceRepository
         $rawSaved = data_get($settings, "{$type}.last_number", '');
 
         $prefix = trim(Data::string($rawPrefix), '-');
-        $prefix = filled($prefix) ? $prefix : 'GY';
+        $prefix = filled($prefix) ? $prefix : 'FIT';
         $separator = $prefix !== '' ? '-' : '';
         $match = $prefix.$separator;
 
@@ -91,7 +91,7 @@ class JsonSequenceRepository implements SequenceRepository
         }
 
         $settings = $this->settingsRepository->get();
-        $rawPrefix = data_get($settings, "{$type}.prefix", 'GY');
+        $rawPrefix = data_get($settings, "{$type}.prefix", 'FIT');
         $prefix = trim(Data::string($rawPrefix), '-');
 
         $numericPart = Str::of($newNumber)

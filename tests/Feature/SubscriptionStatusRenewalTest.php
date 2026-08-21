@@ -40,7 +40,7 @@ it('marks an expired subscription with a renewal as renewed', function (): void 
         'status' => Status::Ongoing,
     ]);
 
-    $this->artisan('gymie:subscriptions', ['--mark-expired' => true])
+    $this->artisan('fitcrm:subscriptions', ['--mark-expired' => true])
         ->expectsOutputToContain('1 renewed')
         ->assertSuccessful();
 

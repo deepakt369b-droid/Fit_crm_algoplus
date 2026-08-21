@@ -292,7 +292,7 @@
 
 <body>
     @php
-    $gymName = (string) data_get($settings, 'general.gym_name', 'Gymie');
+    $gymName = (string) data_get($settings, 'general.gym_name', 'FitCRM');
     $gymAddress = (string) data_get($settings, 'general.address', '');
     $gymEmail = (string) data_get($settings, 'general.gym_email', '');
     $gymContact = (string) data_get($settings, 'general.gym_contact', '');
@@ -467,7 +467,7 @@
         </div>
 
         <div class="footer">
-            {{ __('app.invoices.pdf.footer_tagline', ['domain' => filled($gymDomain) ? $gymDomain : 'gymie']) }}
+            {{ __('app.invoices.pdf.footer_tagline', ['domain' => filled($gymDomain) ? $gymDomain : 'fitcrm']) }}
         </div>
     </div>
 </body>

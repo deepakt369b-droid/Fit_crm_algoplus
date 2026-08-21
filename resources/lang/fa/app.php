@@ -9,6 +9,9 @@ return [
         'the_beginning' => 'از ابتدا',
         'today' => 'امروز',
     ],
+    'branding' => [
+        'attribution' => 'FitCRM — قدرت گرفته از Algo Plus',
+    ],
     'fields' => [
         'id' => 'شناسه',
         'photo' => 'تصویر',
@@ -376,7 +379,7 @@ return [
             'tokens_receipt' => 'کدهای پویا: {invoice_number}, {status}, {total}, {paid}, {due}, {gym_name}, {member_name}, {payment_amount}',
         ],
         'placeholders' => [
-            'prefix' => 'GY',
+            'prefix' => 'FIT',
             'invoice_email_subject' => 'فاکتور شماره {invoice_number} - {status}',
             'receipt_email_subject' => 'پرداخت دریافت شد - فاکتور {invoice_number}',
         ],

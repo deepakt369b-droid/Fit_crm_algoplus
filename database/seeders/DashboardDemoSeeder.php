@@ -259,7 +259,7 @@ class DashboardDemoSeeder extends Seeder
         $rawPrefix = (string) data_get(Helpers::getSettings(), 'invoice.prefix', '');
         $prefix = trim($rawPrefix, '-');
 
-        return filled($prefix) ? $prefix : 'GY';
+        return filled($prefix) ? $prefix : 'FIT';
     }
 
     /**
