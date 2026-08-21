@@ -1,0 +1,33 @@
+# Fallback build path for Coolify's Nixpacks builder. The Dockerfile is
+# the authoritative, tested path (multi-stage build, nginx + php-fpm +
+# supervisor, separate queue/scheduler containers via CONTAINER_ROLE).
+# This file exists only because Nixpacks needs less to maintain and some
+# Coolify setups default to it — it runs a single process, so if you use
+# this path you must run the queue worker and scheduler as separate
+# Coolify resources yourself (same image/repo, override the start command
+# with `php artisan queue:work` / `php artisan schedule:work`), since
+# nothing here does that for you the way docker-compose.yaml's three
+# services do.
+
+[phases.setup]
+nixPkgs = ["php82", "php82Packages.composer", "nodejs_20"]
+
+[phases.install]
+cmds = [
+    "composer install --no-dev --no-scripts --prefer-dist --optimize-autoloader",
+    "npm ci",
+]
+
+[phases.build]
+cmds = [
+    "npm run build",
+]
+
+[start]
+# `php artisan serve` is Laravel's single-threaded development server —
+# it is not a production-grade web server. It's used here only because
+# Nixpacks needs one process to run this app standalone, and this file
+# is the fallback path; the Dockerfile's nginx + php-fpm is the real
+# production path. Prefer the Dockerfile for anything beyond
+# low-traffic/staging use of this nixpacks path.
+cmd = "php artisan storage:link || true && php artisan migrate --force && php artisan config:cache && php artisan route:cache && php artisan view:cache && php artisan filament:optimize && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"
