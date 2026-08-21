@@ -6,6 +6,15 @@
 > this document is kept as-is for the historical record of decisions
 > made during the build; treat "uncommitted"/"pick up here" language
 > below as describing that point in time, not the current state.
+>
+> **Second update:** Node 4 M2 (broadcasts) is also now complete and
+> committed — see `git log` for that commit's message, which documents
+> what M2 added (wa_broadcasts/wa_broadcast_recipients, chunked/paced
+> sending via SendWhatsappBroadcastBatch, the messaging-tier throttle,
+> per-recipient status propagation from WhatsappMessage, and the
+> Filament WhatsappBroadcastResource) in the same level of detail as
+> the M1 notes below. Next up per the plan: M3 (automations) or M4 (AI
+> assistant + knowledge base), each with its own Human Gate first.
 
 Working directory: `C:\Users\DK\Downloads\FitCRM\Fit_crm_algoplus` (git repo, not pushed anywhere).
 Plan file: `C:\Users\DK\.claude\plans\markdown-system-directive-rebrand-whimsical-hummingbird.md` — read this first for full context, decisions, and rationale.

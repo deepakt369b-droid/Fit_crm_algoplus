@@ -71,4 +71,39 @@ class WhatsappMessage extends Model
     {
         return $this->belongsTo(User::class, 'sent_by');
     }
+
+    /**
+     * Propagate a status change to this message's broadcast recipient
+     * row (if it belongs to one) and the parent broadcast's counters,
+     * rather than tracking delivered/read separately in two places.
+     */
+    protected static function booted(): void
+    {
+        static::updated(function (self $message): void {
+            if (! $message->wasChanged('status')) {
+                return;
+            }
+
+            $recipient = WhatsappBroadcastRecipient::query()
+                ->where('wa_message_id', $message->id)
+                ->first();
+
+            if ($recipient === null) {
+                return;
+            }
+
+            $recipient->forceFill(['status' => $message->status])->saveQuietly();
+
+            $column = match ($message->status) {
+                'delivered' => 'delivered_count',
+                'read' => 'read_count',
+                'failed' => 'failed_count',
+                default => null,
+            };
+
+            if ($column !== null) {
+                $recipient->broadcast?->increment($column);
+            }
+        });
+    }
 }

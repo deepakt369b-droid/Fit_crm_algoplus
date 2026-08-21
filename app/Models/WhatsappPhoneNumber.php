@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $verified_name
  * @property string|null $access_token
  * @property bool $is_shared
+ * @property int $messaging_tier_limit
  * @property string $status
  */
 class WhatsappPhoneNumber extends Model
@@ -38,6 +39,7 @@ class WhatsappPhoneNumber extends Model
         'verified_name',
         'access_token',
         'is_shared',
+        'messaging_tier_limit',
         'status',
     ];
 
@@ -63,5 +65,35 @@ class WhatsappPhoneNumber extends Model
     public function conversations(): HasMany
     {
         return $this->hasMany(WhatsappConversation::class);
+    }
+
+    /**
+     * @return HasMany<WhatsappBroadcast, $this>
+     */
+    public function broadcasts(): HasMany
+    {
+        return $this->hasMany(WhatsappBroadcast::class);
+    }
+
+    /**
+     * Unique contacts this number has proactively messaged (via a
+     * broadcast) in the last rolling 24 hours — the thing Meta's
+     * messaging tier actually caps. Service replies within an existing
+     * conversation don't count against this, so only broadcast sends are
+     * counted here, not every wa_message.
+     */
+    public function newConversationsInLast24Hours(): int
+    {
+        return WhatsappBroadcastRecipient::query()
+            ->whereHas('broadcast', fn ($query) => $query->where('wa_phone_number_id', $this->id))
+            ->whereIn('status', ['sent', 'delivered', 'read', 'failed'])
+            ->where('updated_at', '>=', now()->subDay())
+            ->distinct('wa_contact_id')
+            ->count('wa_contact_id');
+    }
+
+    public function remainingMessagingCapacity(): int
+    {
+        return max(0, $this->messaging_tier_limit - $this->newConversationsInLast24Hours());
     }
 }

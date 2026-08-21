@@ -15,6 +15,7 @@ use App\Filament\Resources\Services\ServiceResource;
 use App\Filament\Resources\Subscriptions\SubscriptionResource;
 use App\Filament\Resources\Users\UserResource;
 use App\Filament\Resources\WhatsappContacts\WhatsappContactResource;
+use App\Filament\Resources\WhatsappBroadcasts\WhatsappBroadcastResource;
 use App\Filament\Resources\WhatsappConversations\WhatsappConversationResource;
 use App\Filament\Resources\WhatsappPhoneNumbers\WhatsappPhoneNumberResource;
 use App\Filament\Resources\WhatsappTemplates\WhatsappTemplateResource;
@@ -179,6 +180,7 @@ class AdminPanelProvider extends PanelProvider
 
         $marketing = [
             ...WhatsappConversationResource::getNavigationItems(),
+            ...WhatsappBroadcastResource::getNavigationItems(),
             ...WhatsappContactResource::getNavigationItems(),
             ...WhatsappTemplateResource::getNavigationItems(),
             ...WhatsappPhoneNumberResource::getNavigationItems(),
