@@ -87,9 +87,13 @@ return [
         'discount_with_rate' => 'Discount (:rate%)',
         'password' => 'Password',
         'password_confirmation' => 'Confirm password',
+        'slug' => 'Slug',
+        'timezone' => 'Timezone',
+        'currency' => 'Currency',
     ],
     'placeholders' => [
         'na' => 'N/A',
+        'gym_slug_helper' => 'Used in branch URLs. Auto-filled from the name; edit only if needed.',
         'dash' => '-',
         'enter_amount' => 'Enter amount',
         'optional_note' => 'Optional note…',
@@ -186,6 +190,10 @@ return [
         'users' => [
             'singular' => 'User',
             'plural' => 'Users',
+        ],
+        'gyms' => [
+            'singular' => 'Branch',
+            'plural' => 'Branches',
         ],
     ],
     'actions' => [

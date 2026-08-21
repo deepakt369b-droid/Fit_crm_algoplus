@@ -13,4 +13,6 @@ return [
 
     \App\Models\User::class => ['followUps', 'enquiries'],
 
+    \App\Models\Gym::class => ['users', 'members'],
+
 ];

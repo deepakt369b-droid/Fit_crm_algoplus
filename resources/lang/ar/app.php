@@ -87,9 +87,13 @@ return [
         'discount_with_rate' => 'الخصم (:rate%)',
         'password' => 'كلمة المرور',
         'password_confirmation' => 'تاكيد كلمة المرور',
+        'slug' => 'المعرف المختصر',
+        'timezone' => 'المنطقة الزمنية',
+        'currency' => 'العملة',
     ],
     'placeholders' => [
         'na' => 'غير متوفر',
+        'gym_slug_helper' => 'يستخدم في روابط الفرع. يُعبأ تلقائيا من الاسم، عدّله فقط عند الحاجة.',
         'dash' => '-',
         'enter_amount' => 'ادخل المبلغ',
         'optional_note' => 'ملاحظة اختيارية…',
@@ -186,6 +190,10 @@ return [
         'users' => [
             'singular' => 'مستخدم',
             'plural' => 'المستخدمون',
+        ],
+        'gyms' => [
+            'singular' => 'فرع',
+            'plural' => 'الفروع',
         ],
     ],
     'actions' => [

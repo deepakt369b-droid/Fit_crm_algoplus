@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Enums\Status;
 use App\Helpers\Helpers;
+use App\Models\Concerns\BelongsToGym;
+use App\Models\Concerns\RetriesOnSequenceCollision;
 use App\Support\Billing\InvoiceCalculator;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -34,7 +36,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Invoice extends Model
 {
     /** @use HasFactory<\Database\Factories\InvoiceFactory> */
-    use HasFactory, SoftDeletes;
+    use BelongsToGym, HasFactory, RetriesOnSequenceCollision, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -42,6 +44,7 @@ class Invoice extends Model
      * @var list<string>
      */
     protected $fillable = [
+        'gym_id',
         'number',
         'subscription_id',
         'date',
@@ -73,6 +76,14 @@ class Invoice extends Model
     public function subscription(): BelongsTo
     {
         return $this->belongsTo(Subscription::class);
+    }
+
+    /**
+     * @see RetriesOnSequenceCollision
+     */
+    protected function sequenceAttribute(): string
+    {
+        return 'number';
     }
 
     /**

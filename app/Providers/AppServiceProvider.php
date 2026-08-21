@@ -11,9 +11,9 @@ use App\Models\InvoiceTransaction;
 use App\Observers\InvoiceObserver;
 use App\Observers\InvoiceTransactionObserver;
 use App\Services\Api\Docs\AddIndexQueryParametersTransformer;
+use App\Services\DatabaseSettingsRepository;
 use App\Services\JsonSequenceRepository;
-use App\Services\JsonSettingsRepository;
-use App\Services\NullTenantContext;
+use App\Services\ResolvedTenantContext;
 use App\Support\Data;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
@@ -53,9 +53,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->singleton(SettingsRepository::class, JsonSettingsRepository::class);
+        $this->app->singleton(SettingsRepository::class, DatabaseSettingsRepository::class);
         $this->app->singleton(SequenceRepository::class, JsonSequenceRepository::class);
-        $this->app->singletonIf(TenantContext::class, NullTenantContext::class);
+        $this->app->singletonIf(TenantContext::class, ResolvedTenantContext::class);
     }
 
     /**

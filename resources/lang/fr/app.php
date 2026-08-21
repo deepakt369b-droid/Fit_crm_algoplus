@@ -87,9 +87,13 @@ return [
         'discount_with_rate' => 'Remise (:rate%)',
         'password' => 'Mot de passe',
         'password_confirmation' => 'Confirmer le mot de passe',
+        'slug' => 'Identifiant (slug)',
+        'timezone' => 'Fuseau horaire',
+        'currency' => 'Devise',
     ],
     'placeholders' => [
         'na' => 'N/A',
+        'gym_slug_helper' => 'Utilisé dans les URL de la filiale. Rempli automatiquement à partir du nom ; à modifier seulement si nécessaire.',
         'dash' => '-',
         'enter_amount' => 'Saisir un montant',
         'optional_note' => 'Note optionnelle…',
@@ -186,6 +190,10 @@ return [
         'users' => [
             'singular' => 'Utilisateur',
             'plural' => 'Utilisateurs',
+        ],
+        'gyms' => [
+            'singular' => 'Filiale',
+            'plural' => 'Filiales',
         ],
     ],
     'actions' => [

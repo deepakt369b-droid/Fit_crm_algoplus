@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\Status;
+use App\Models\Concerns\BelongsToGym;
 use App\Models\Concerns\CascadesSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -25,7 +26,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Plan extends Model
 {
     /** @use HasFactory<\Database\Factories\PlanFactory> */
-    use CascadesSoftDeletes, HasFactory, SoftDeletes;
+    use BelongsToGym, CascadesSoftDeletes, HasFactory, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -33,6 +34,7 @@ class Plan extends Model
      * @var list<string>
      */
     protected $fillable = [
+        'gym_id',
         'name',
         'code',
         'description',

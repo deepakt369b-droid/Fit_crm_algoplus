@@ -5,7 +5,6 @@ namespace App\Helpers;
 use App\Contracts\SequenceRepository;
 use App\Contracts\SettingsRepository;
 use App\Models\Plan;
-use App\Services\JsonSettingsRepository;
 use App\Support\AppConfig;
 use App\Support\Billing\Currency;
 use App\Support\Billing\Discounts;
@@ -41,7 +40,7 @@ class Helpers
         /** @var mixed $repository */
         $repository = app(SettingsRepository::class);
 
-        if ($repository instanceof JsonSettingsRepository) {
+        if (method_exists($repository, 'setTestOverride')) {
             $repository->setTestOverride($override);
         }
     }

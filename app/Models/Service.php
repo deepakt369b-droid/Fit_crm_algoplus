@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToGym;
 use App\Models\Concerns\CascadesSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Service extends Model
 {
     /** @use HasFactory<\Database\Factories\ServiceFactory> */
-    use CascadesSoftDeletes, HasFactory, SoftDeletes;
+    use BelongsToGym, CascadesSoftDeletes, HasFactory, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -19,6 +20,7 @@ class Service extends Model
      * @var list<string>
      */
     protected $fillable = [
+        'gym_id',
         'name',
         'description',
     ];

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\Status;
+use App\Models\Concerns\BelongsToGym;
 use App\Models\Concerns\CascadesSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -35,7 +36,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Enquiry extends Model
 {
     /** @use HasFactory<\Database\Factories\EnquiryFactory> */
-    use CascadesSoftDeletes, HasFactory, SoftDeletes;
+    use BelongsToGym, CascadesSoftDeletes, HasFactory, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -43,6 +44,7 @@ class Enquiry extends Model
      * @var list<string>
      */
     protected $fillable = [
+        'gym_id',
         'user_id',
         'name',
         'email',

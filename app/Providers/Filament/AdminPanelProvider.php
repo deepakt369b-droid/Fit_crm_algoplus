@@ -14,6 +14,7 @@ use App\Filament\Resources\Services\ServiceResource;
 use App\Filament\Resources\Subscriptions\SubscriptionResource;
 use App\Filament\Resources\Users\UserResource;
 use App\Http\Middleware\SetAppLocale;
+use App\Models\Gym;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use BezhanSalleh\FilamentShield\Resources\Roles\RoleResource;
 use Filament\Enums\ThemeMode;
@@ -48,6 +49,7 @@ class AdminPanelProvider extends PanelProvider
     public function panel(Panel $panel): Panel
     {
         return $this->basePanel($panel)
+            ->tenant(Gym::class, slugAttribute: 'slug', ownershipRelationship: 'gym')
             ->navigation(fn (NavigationBuilder $builder) => $this->buildNavigation($builder));
     }
 
@@ -56,10 +58,32 @@ class AdminPanelProvider extends PanelProvider
      */
     public function basePanel(Panel $panel): Panel
     {
-        return $panel
+        return $this->sharedPanelStyling($panel)
             ->default()
             ->id('admin')
             ->path('/')
+            ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
+            ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
+            ->pages([
+                Dashboard::class,
+                Settings::class,
+            ])
+            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
+            ->widgets([])
+            ->plugins([FilamentShieldPlugin::make()
+                ->navigationIcon(fn (): null => null)
+                ->activeNavigationIcon(fn (): null => null)]);
+    }
+
+    /**
+     * Styling, theming, middleware and render hooks shared by every panel
+     * (the branch-scoped admin panel and the superadmin panel). Deliberately
+     * excludes id/path/default and resource/page/widget registration, since
+     * those differ per panel.
+     */
+    public function sharedPanelStyling(Panel $panel): Panel
+    {
+        return $panel
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->login()
             ->passwordReset()
@@ -72,17 +96,6 @@ class AdminPanelProvider extends PanelProvider
             ->colors($this->colors())
             ->defaultThemeMode(ThemeMode::Light)
             ->sidebarWidth('12rem')
-            ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
-            ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
-            ->pages([
-                Dashboard::class,
-                Settings::class,
-            ])
-            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
-            ->widgets([])
-            ->plugins([FilamentShieldPlugin::make()
-                ->navigationIcon(fn (): null => null)
-                ->activeNavigationIcon(fn (): null => null)])
             ->middleware([
                 SetAppLocale::class,
                 EncryptCookies::class,

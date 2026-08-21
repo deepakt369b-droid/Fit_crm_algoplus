@@ -3,13 +3,14 @@
 namespace App\Models;
 
 use App\Enums\Status;
+use App\Models\Concerns\BelongsToGym;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Expense extends Model
 {
     /** @use HasFactory<\Database\Factories\ExpenseFactory> */
-    use HasFactory;
+    use BelongsToGym, HasFactory;
 
     protected $attributes = [
         'status' => 'pending',
@@ -19,6 +20,7 @@ class Expense extends Model
      * @var list<string>
      */
     protected $fillable = [
+        'gym_id',
         'name',
         'amount',
         'date',

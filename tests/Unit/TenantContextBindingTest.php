@@ -2,10 +2,10 @@
 
 use App\Contracts\TenantContext;
 use App\Providers\AppServiceProvider;
-use App\Services\NullTenantContext;
+use App\Services\ResolvedTenantContext;
 use Illuminate\Foundation\Application;
 
-it('registers a singleton tenant context for single-tenant installations', function (): void {
+it('registers a singleton resolved tenant context for multi-branch installations', function (): void {
     $application = new Application;
 
     (new AppServiceProvider($application))->register();
@@ -13,8 +13,7 @@ it('registers a singleton tenant context for single-tenant installations', funct
     $tenantContext = $application->make(TenantContext::class);
 
     expect($tenantContext)
-        ->toBeInstanceOf(NullTenantContext::class)
-        ->and($tenantContext->gymId())->toBeNull()
+        ->toBeInstanceOf(ResolvedTenantContext::class)
         ->and($application->make(TenantContext::class))->toBe($tenantContext);
 });
 

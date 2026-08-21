@@ -4,7 +4,9 @@ namespace App\Models;
 
 use App\Enums\Status;
 use App\Helpers\Helpers;
+use App\Models\Concerns\BelongsToGym;
 use App\Models\Concerns\CascadesSoftDeletes;
+use App\Models\Concerns\RetriesOnSequenceCollision;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -34,7 +36,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Member extends Model
 {
     /** @use HasFactory<\Database\Factories\MemberFactory> */
-    use CascadesSoftDeletes, HasFactory, SoftDeletes;
+    use BelongsToGym, CascadesSoftDeletes, HasFactory, RetriesOnSequenceCollision, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -42,6 +44,7 @@ class Member extends Model
      * @var list<string>
      */
     protected $fillable = [
+        'gym_id',
         'photo',
         'code',
         'name',
@@ -83,6 +86,14 @@ class Member extends Model
     public function subscriptions(): HasMany
     {
         return $this->hasMany(Subscription::class);
+    }
+
+    /**
+     * @see RetriesOnSequenceCollision
+     */
+    protected function sequenceAttribute(): string
+    {
+        return 'code';
     }
 
     /**

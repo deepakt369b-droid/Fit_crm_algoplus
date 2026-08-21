@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Contracts\TenantContext;
+use App\Models\Gym;
 use Illuminate\Database\Seeder;
 use Nnjeim\World\Actions\SeedAction;
 use Throwable;
@@ -14,6 +16,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->seedWorldData();
+        $this->bindDefaultBranchTenantContext();
         $this->callConfiguredSeeders('fitcrm.seeding.before');
 
         $this->call([
@@ -34,6 +37,41 @@ class DatabaseSeeder extends Seeder
         if (app()->environment(['local', 'development'])) {
             $this->call(DashboardDemoSeeder::class);
         }
+    }
+
+    /**
+     * Bind every seeded record to a single default branch.
+     *
+     * Seeders run in console context, where TenantContext resolves to no
+     * branch (see ResolvedTenantContext) — without this, every seeded
+     * record would end up with a null gym_id, invisible to any branch
+     * admin scoped to a real branch, even though a "Main Branch" gym also
+     * exists (created by the gym_id migrations). Binding a fixed
+     * TenantContext here makes BelongsToGym auto-fill every seeded record
+     * onto that branch instead, exactly like a real request from an admin
+     * of that branch would.
+     */
+    private function bindDefaultBranchTenantContext(): void
+    {
+        $gym = Gym::query()->firstOrCreate(
+            ['slug' => 'main-branch'],
+            [
+                'name' => 'Main Branch',
+                'status' => 'active',
+                'timezone' => config('app.timezone', 'UTC'),
+                'currency' => 'USD',
+            ],
+        );
+
+        app()->instance(TenantContext::class, new class($gym->id) implements TenantContext
+        {
+            public function __construct(private readonly int $gymId) {}
+
+            public function gymId(): ?int
+            {
+                return $this->gymId;
+            }
+        });
     }
 
     /**

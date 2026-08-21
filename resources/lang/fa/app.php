@@ -87,9 +87,13 @@ return [
         'discount_with_rate' => 'تخفیف (:rate%)',
         'password' => 'رمز عبور',
         'password_confirmation' => 'تایید رمز عبور',
+        'slug' => 'شناسه یکتا',
+        'timezone' => 'منطقه زمانی',
+        'currency' => 'واحد پول',
     ],
     'placeholders' => [
         'na' => 'نامشخص',
+        'gym_slug_helper' => 'در لینک‌های شعبه استفاده می‌شود. به‌طور خودکار از نام پر می‌شود؛ فقط در صورت نیاز ویرایش کنید.',
         'dash' => '-',
         'enter_amount' => 'مبلغ را وارد کنید',
         'optional_note' => 'یادداشت اختیاری...',
@@ -186,6 +190,10 @@ return [
         'users' => [
             'singular' => 'کاربر',
             'plural' => 'کاربران',
+        ],
+        'gyms' => [
+            'singular' => 'شعبه',
+            'plural' => 'شعبه‌ها',
         ],
     ],
     'actions' => [

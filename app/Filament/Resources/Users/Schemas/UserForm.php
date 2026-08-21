@@ -3,6 +3,8 @@
 namespace App\Filament\Resources\Users\Schemas;
 
 use App\Helpers\Helpers;
+use App\Models\Gym;
+use Filament\Facades\Filament;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
@@ -85,6 +87,15 @@ class UserForm
                                     ->getOptionLabelFromRecordUsing(
                                         fn ($record): string => Str::headline($record->name)
                                     ),
+                                Select::make('gym_id')
+                                    ->label(__('app.resources.gyms.singular'))
+                                    ->options(fn (): array => Gym::query()->orderBy('name')->pluck('name', 'id')->all())
+                                    ->searchable()
+                                    ->required()
+                                    // Only relevant when there is no ambient branch (the superadmin
+                                    // panel, which has no tenant): inside a branch's own admin panel,
+                                    // BelongsToGym auto-fills gym_id from the current tenant instead.
+                                    ->visible(fn (): bool => Filament::getTenant() === null),
                                 TextInput::make('password')
                                     ->label(__('app.fields.password'))
                                     ->password()

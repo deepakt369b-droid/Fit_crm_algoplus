@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\Status;
+use App\Models\Concerns\BelongsToGym;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -26,7 +27,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Subscription extends Model
 {
     /** @use HasFactory<\Database\Factories\SubscriptionFactory> */
-    use HasFactory, SoftDeletes;
+    use BelongsToGym, HasFactory, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -34,6 +35,7 @@ class Subscription extends Model
      * @var list<string>
      */
     protected $fillable = [
+        'gym_id',
         'renewed_from_subscription_id',
         'member_id',
         'plan_id',

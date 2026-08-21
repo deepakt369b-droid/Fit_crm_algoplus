@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\Status;
+use App\Models\Concerns\BelongsToGym;
 use Database\Factories\FollowUpFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -23,7 +24,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class FollowUp extends Model
 {
     /** @use HasFactory<FollowUpFactory> */
-    use HasFactory, SoftDeletes;
+    use BelongsToGym, HasFactory, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -31,6 +32,7 @@ class FollowUp extends Model
      * @var list<string>
      */
     protected $fillable = [
+        'gym_id',
         'enquiry_id',
         'user_id',
         'schedule_date',
