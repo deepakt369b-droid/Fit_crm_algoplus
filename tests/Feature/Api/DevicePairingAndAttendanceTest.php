@@ -88,13 +88,40 @@ it('lets a device enrol a member biometric identifier scoped to its own branch',
         'member_id' => $memberInB->id,
         'external_user_id' => 'ext-1',
         'biometric_type' => 'face',
+        'consent' => true,
     ])->assertUnprocessable();
 
     $this->postJson('/api/v1/devices/enrol', [
         'member_id' => $memberInA->id,
         'external_user_id' => 'ext-1',
         'biometric_type' => 'face',
+        'consent' => true,
     ])->assertCreated();
 
     expect(MemberDeviceIdentifier::query()->where('member_id', $memberInA->id)->count())->toBe(1);
+});
+
+it('refuses to enrol a member without recorded consent, and stamps consent_given_at when given', function (): void {
+    $gym = Gym::factory()->create();
+    $device = Device::factory()->for($gym)->create();
+    $member = Member::factory()->for($gym)->create();
+
+    Sanctum::actingAs($device, ['attendance:write']);
+
+    $this->postJson('/api/v1/devices/enrol', [
+        'member_id' => $member->id,
+        'external_user_id' => 'ext-1',
+        'biometric_type' => 'face',
+        'consent' => false,
+    ])->assertUnprocessable();
+
+    $this->postJson('/api/v1/devices/enrol', [
+        'member_id' => $member->id,
+        'external_user_id' => 'ext-1',
+        'biometric_type' => 'face',
+        'consent' => true,
+    ])->assertCreated();
+
+    $identifier = MemberDeviceIdentifier::query()->where('member_id', $member->id)->firstOrFail();
+    expect($identifier->consent_given_at)->not->toBeNull();
 });

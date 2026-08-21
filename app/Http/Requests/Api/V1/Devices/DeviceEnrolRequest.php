@@ -21,6 +21,10 @@ class DeviceEnrolRequest extends FormRequest
             'external_user_id' => ['required', 'string', 'max:255'],
             'biometric_type' => ['required', 'string', 'in:face,fingerprint'],
             'finger_position' => ['nullable', 'string', 'max:50', 'required_if:biometric_type,fingerprint'],
+            // Biometric enrolment is regulated personal data in most jurisdictions
+            // (GDPR/DPDP special-category data): the member (or their guardian)
+            // must have consented before the device is allowed to enrol them.
+            'consent' => ['required', 'accepted'],
         ];
     }
 }

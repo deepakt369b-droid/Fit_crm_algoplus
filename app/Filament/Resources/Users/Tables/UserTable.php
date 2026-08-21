@@ -124,6 +124,10 @@ class UserTable
             })
             ->filters([
                 TrashedFilter::make(),
+                Filter::make('missing_photo')
+                    ->label(__('app.filters.missing_photo'))
+                    ->query(fn (Builder $query): Builder => $query->whereNull('photo'))
+                    ->toggle(),
                 Filter::make('date')
                     ->schema([
                         DatePicker::make('date_from')

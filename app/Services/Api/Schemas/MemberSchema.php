@@ -50,7 +50,7 @@ final class MemberSchema
     public static function storeRules(): array
     {
         return [
-            'photo' => ['nullable', 'file', 'image', 'max:10240'],
+            'photo' => ['required', 'file', 'image', 'max:10240'],
             'code' => ['nullable', 'string', 'max:255', new ModelUnique(Member::class, 'code')],
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', new ModelUnique(Member::class, 'email')],
@@ -76,7 +76,7 @@ final class MemberSchema
     public static function updateRules(int|string $memberId): array
     {
         return [
-            'photo' => ['sometimes', 'nullable', 'file', 'image', 'max:10240'],
+            'photo' => ['sometimes', 'file', 'image', 'max:10240'],
             'code' => ['sometimes', 'nullable', 'string', 'max:255', new ModelUnique(Member::class, 'code', $memberId)],
             'name' => ['sometimes', 'string', 'max:255'],
             'email' => ['sometimes', 'string', 'email', 'max:255', new ModelUnique(Member::class, 'email', $memberId)],

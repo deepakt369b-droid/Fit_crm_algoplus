@@ -111,6 +111,7 @@ class DevicesController extends ApiController
                 'gym_id' => $device->gym_id,
                 'external_user_id' => $data['external_user_id'],
                 'enrolled_at' => now(),
+                'consent_given_at' => now(),
             ],
         );
 

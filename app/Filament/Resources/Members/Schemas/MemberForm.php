@@ -2,11 +2,11 @@
 
 namespace App\Filament\Resources\Members\Schemas;
 
+use App\Filament\Forms\Components\CameraCapture;
 use App\Filament\Resources\Subscriptions\Schemas\SubscriptionForm;
 use App\Helpers\Helpers;
 use App\Models\Member;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -31,20 +31,11 @@ class MemberForm
             ->components([
                 Section::make()
                     ->schema([
-                        FileUpload::make('photo')
-                            ->imageEditor()
-                            ->preserveFilenames()
-                            ->maxSize(1024 * 1024 * 10)
+                        CameraCapture::make('photo')
+                            ->label(__('app.fields.photo'))
                             ->disk('public')
                             ->directory('images')
-                            ->image()
-                            ->placeholder(__('app.placeholders.upload_logo'))
-                            ->loadingIndicatorPosition('left')
-                            ->panelAspectRatio('6:7')
-                            ->panelLayout('integrated')
-                            ->removeUploadedFileButtonPosition('right')
-                            ->uploadButtonPosition('left')
-                            ->uploadProgressIndicatorPosition('left'),
+                            ->required(),
 
                         Grid::make()
                             ->schema([

@@ -335,6 +335,14 @@ return [
         'revoke' => 'Revoke',
         'revoke_confirmation' => 'This immediately disconnects the device and deletes its access token. You will need to pair it again to reconnect it.',
         'revoked' => 'Device access has been revoked.',
+        'camera_unavailable' => 'Camera unavailable — use "Upload instead" below.',
+        'camera_starting' => 'Starting camera…',
+        'capture_photo' => 'Capture photo',
+        'retake_photo' => 'Retake',
+        'upload_instead' => 'Upload instead',
+    ],
+    'filters' => [
+        'missing_photo' => 'Photo missing',
     ],
     'dashboard' => [
         'title' => 'Dashboard',

@@ -2,11 +2,11 @@
 
 namespace App\Filament\Resources\Users\Schemas;
 
+use App\Filament\Forms\Components\CameraCapture;
 use App\Helpers\Helpers;
 use App\Models\Gym;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -29,21 +29,11 @@ class UserForm
                 Section::make()
                     ->columns(4)
                     ->schema([
-                        FileUpload::make('photo')
+                        CameraCapture::make('photo')
                             ->label(__('app.fields.photo'))
-                            ->imageEditor()
-                            ->preserveFilenames()
-                            ->maxSize(1024 * 1024 * 10)
                             ->disk('public')
                             ->directory('images')
-                            ->image()
-                            ->placeholder(__('app.placeholders.upload_photo'))
-                            ->loadingIndicatorPosition('left')
-                            ->panelAspectRatio('6:5')
-                            ->panelLayout('integrated')
-                            ->removeUploadedFileButtonPosition('right')
-                            ->uploadButtonPosition('left')
-                            ->uploadProgressIndicatorPosition('left'),
+                            ->required(),
                         Grid::make()
                             ->columns(3)
                             ->schema([

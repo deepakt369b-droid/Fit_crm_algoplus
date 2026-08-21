@@ -49,7 +49,7 @@ final class UserSchema
     public static function storeRules(): array
     {
         return [
-            'photo' => ['nullable', 'file', 'image', 'max:10240'],
+            'photo' => ['required', 'file', 'image', 'max:10240'],
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', new ModelUnique(User::class, 'email')],
             'contact' => ['nullable', 'string', 'max:20'],
@@ -73,7 +73,7 @@ final class UserSchema
     public static function updateRules(int|string $userId): array
     {
         return [
-            'photo' => ['sometimes', 'nullable', 'file', 'image', 'max:10240'],
+            'photo' => ['sometimes', 'file', 'image', 'max:10240'],
             'name' => ['sometimes', 'string', 'max:255'],
             'email' => ['sometimes', 'string', 'email', 'max:255', new ModelUnique(User::class, 'email', $userId)],
             'contact' => ['sometimes', 'nullable', 'string', 'max:20'],

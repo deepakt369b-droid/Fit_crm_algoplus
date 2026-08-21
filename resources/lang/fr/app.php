@@ -335,6 +335,14 @@ return [
         'revoke' => 'Révoquer',
         'revoke_confirmation' => 'Ceci déconnecte immédiatement l\'appareil et supprime son jeton d\'accès. Vous devrez le réappairer pour le reconnecter.',
         'revoked' => 'L\'accès de l\'appareil a été révoqué.',
+        'camera_unavailable' => 'Caméra indisponible — utilisez « Importer à la place » ci-dessous.',
+        'camera_starting' => 'Démarrage de la caméra…',
+        'capture_photo' => 'Prendre la photo',
+        'retake_photo' => 'Reprendre',
+        'upload_instead' => 'Importer à la place',
+    ],
+    'filters' => [
+        'missing_photo' => 'Photo manquante',
     ],
     'dashboard' => [
         'title' => 'Tableau de bord',
