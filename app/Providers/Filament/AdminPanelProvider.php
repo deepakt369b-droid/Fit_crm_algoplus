@@ -96,10 +96,15 @@ class AdminPanelProvider extends PanelProvider
             ->login()
             ->passwordReset()
             ->brandName('FitCRM')
-            ->brandLogo('/images/logo.svg')
-            ->darkModeBrandLogo('/images/logo-dark-mode.svg')
+            // Single asset for both themes - no dark-mode-optimized variant
+            // was supplied (the source image has an opaque light card
+            // background, not transparent), so it renders as a light chip
+            // on the dark sidebar rather than blending in. Swap in a proper
+            // dark variant here if one is produced later.
+            ->brandLogo('/images/logo.jpg')
+            ->darkModeBrandLogo('/images/logo.jpg')
             ->brandLogoHeight('2.5rem')
-            ->favicon('/images/favicon.svg')
+            ->favicon('/images/favicon.jpg')
             ->unsavedChangesAlerts()
             ->colors($this->colors())
             ->defaultThemeMode(ThemeMode::Light)

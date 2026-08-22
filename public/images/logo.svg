@@ -1,6 +1,0 @@
-<!-- PLACEHOLDER LOGO — replace with the real Algo Plus / FitCRM wordmark before launch -->
-<svg viewBox="0 0 200 56" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="FitCRM">
-    <rect x="0" y="8" width="40" height="40" rx="10" fill="#157573" />
-    <path d="M12 16h18v6H18v6h10v6H18v10h-6z" fill="#ffffff" />
-    <text x="48" y="38" font-family="'Instrument Sans', ui-sans-serif, system-ui, sans-serif" font-size="28" font-weight="700" fill="#084543">FitCRM</text>
-</svg>
