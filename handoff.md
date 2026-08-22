@@ -13,8 +13,17 @@
 > sending via SendWhatsappBroadcastBatch, the messaging-tier throttle,
 > per-recipient status propagation from WhatsappMessage, and the
 > Filament WhatsappBroadcastResource) in the same level of detail as
-> the M1 notes below. Next up per the plan: M3 (automations) or M4 (AI
-> assistant + knowledge base), each with its own Human Gate first.
+> the M1 notes below.
+>
+> **Third update:** Node 4 M3 (automations) is now complete and
+> committed as `8124977` — lang keys were finished for ar/fa/fr, the
+> bracket-balance and brand-string sweeps were re-run clean, and the
+> commit follows the same detail level as M1/M2 (see `git log` for the
+> full message). The "M3 status — pick up here" section below is kept
+> as-is for the historical record of what was in progress at the time;
+> treat "uncommitted"/"pick up here" language there as describing that
+> point in time, not the current state. **Awaiting the M3 Human Gate**
+> (per-milestone review) before starting M4 — see "Next session" below.
 
 Working directory: `C:\Users\DK\Downloads\FitCRM\Fit_crm_algoplus` (git repo, not pushed anywhere).
 Plan file: `C:\Users\DK\.claude\plans\markdown-system-directive-rebrand-whimsical-hummingbird.md` — read this first for full context, decisions, and rationale.
@@ -67,11 +76,136 @@ This is a large, uncommitted change set (~31 files) implementing the merge-in fr
 - **Shared phone numbers** (`is_shared = true`, `gym_id = null`) have no routing logic to guess which branch an inbound message belongs to — by design, they land unscoped (`gym_id = null`) until a staff member manually assigns a branch. This is the "build for both" number-model decision from the plan; the dedicated-number path is fully scoped, the shared-number path is intentionally minimal.
 - **M2 (broadcasts), M3 (automations), M4 (AI assistant + knowledge base)** are not started — their feature flags exist (all default `false`) but no schema/UI/logic behind them.
 
+## M3 status — pick up here (in progress, uncommitted)
+
+Node 4 M3 (automations: trigger + branch/wait/tag/webhook builder) is
+functionally complete in code but **not yet lang-complete, not verified,
+not committed**. `git status` shows 19 files (5 modified, 14 new).
+
+### What's built (all written, none tested/executed)
+- **Migrations**: `wa_automations` (trigger_type, trigger_config JSON,
+  steps JSON, status, gym_id/phone_number_id both nullable), `wa_automation_runs`
+  (status, current_step_index, context JSON, resume_at — indexed on
+  `[status, resume_at]` for the resume sweep).
+- **Models**: `WhatsappAutomation` (auto-fills `created_by` like
+  `WhatsappBroadcast` does), `WhatsappAutomationRun`.
+- **`AutomationStepExecutor`** (`app/Services/WhatsApp/`) — executes
+  exactly one step, returns an outcome (`advance`/`jump`/`wait`/`fail`)
+  for the job to act on. Step types: `send_template`, `add_tag`,
+  `remove_tag`, `wait`, `condition` (branches via `true_step`/
+  `false_step` indices), `webhook` (fire-and-forget POST, now correctly
+  checks `$response->failed()` and logs rather than only catching
+  connection-level exceptions — this was a real gap I caught and fixed
+  before the corresponding test would have been testing nothing).
+- **`ProcessWhatsappAutomationRun`** job — the execution loop. Has a
+  **`MAX_STEPS_PER_INVOCATION = 200` safety cap** that fails a run with
+  a clear error if a misconfigured `condition` step loops back on
+  itself, instead of consuming a queue worker forever. A `wait` step
+  ends the job entirely (status → `waiting`, `resume_at` set) rather
+  than using a queue delay, since a wait can be days long and queue
+  delays that long aren't reliable across every driver.
+- **`ResumeWhatsappAutomations`** artisan command (`fitcrm:automations:resume`,
+  scheduled every 5 minutes in `routes/console.php`) — finds `waiting`
+  runs whose `resume_at` has passed and re-dispatches them.
+- **`AutomationTriggerService`** — matches an inbound-message event
+  against active automations (`contact_created`, `keyword_received`,
+  `opted_in`) and starts a run. Wired into `InboundWebhookProcessor`,
+  which now **also recognizes "START" as an opt-in keyword** (the
+  reciprocal of the existing "STOP" opt-out) — added because the
+  `opted_in` trigger needed a real event to fire on, and it's the
+  obvious/expected counterpart to STOP.
+  - **Important correctness fix already applied**: trigger-firing calls
+    were moved to *after* the `DB::transaction()` block in
+    `processInboundMessage()`, not inside it — dispatching a queued job
+    from inside an uncommitted transaction risks a separate queue
+    worker (on a different DB connection, in production with a real
+    queue driver) reading the contact before it's actually committed.
+    The M1/M2 code didn't have this hazard since it didn't dispatch
+    anything from inside that transaction.
+  - Also fixed in passing: the new-contact name extraction used chained
+    array access on a possibly-null value (`$profiles->get($waId)['profile']['name']`),
+    which emits PHP warnings when a payload has no `contacts` array.
+    Switched to `data_get()`.
+- **Filament `WhatsappAutomationResource`**: form is a `Repeater` over
+  `steps` with per-step-type conditionally-visible fields (Select for
+  type, then Select/TextInput fields shown only for the relevant step
+  type). No dedicated create/edit pages — same modal-based pattern as
+  `GymResource`/`DeviceResource`. Has a `view` page (unlike those two)
+  specifically so `RunsRelationManager` (read-only run history) has
+  somewhere to attach — relation managers need a ViewRecord/EditRecord
+  page, they don't work from modal-only actions, which I initially got
+  wrong and had to fix.
+- **Factories**: `WhatsappAutomationFactory`, `WhatsappAutomationRunFactory`.
+- **Tests written** (not executed): `AutomationStepExecutorTest` (all
+  six step types, including the unknown-step-type failure and the
+  no-phone-number failure), `ProcessWhatsappAutomationRunTest`
+  (sequential execution, wait/resume round-trip, **the infinite-loop
+  cap actually tripping**, inactive-automation failure, already-finished
+  run no-op), `ResumeWhatsappAutomationsTest` (due run resumes, future
+  run left alone), `AutomationTriggerIntegrationTest` (contact_created
+  fires for a new contact and not a returning one, keyword_received
+  matches, START both opts in and fires `opted_in`).
+
+### What's NOT done yet — exactly where I stopped
+1. **Lang keys are half-done.** English (`resources/lang/en/app.php`)
+   is complete for M3 (`resources.whatsapp_automations.*` and a large
+   `whatsapp.*` block: triggers, steps, step_types, operators, etc.).
+   Arabic has **only** the `resources.whatsapp_automations.{singular,plural}`
+   pair added so far (I was mid-edit on the ar file when stopped) — it
+   still needs the full `whatsapp.*` block that English has. **Farsi
+   and French have neither yet.** Copy the English key *names* exactly
+   (see `resources/lang/en/app.php`, search for `'trigger' => 'Trigger',`
+   through `'status_updated' =>`) into ar/fa/fr with translated values,
+   the same way M1/M2's lang additions were done — find each locale's
+   equivalent insertion point (same line numbers as English is usually
+   close but not guaranteed after this partial edit; search by
+   surrounding key names, don't assume line numbers).
+2. **Bracket-balance check not re-run since the ar edit landed.** Before
+   doing anything else, run the same sweep used throughout this build:
+   ```
+   for loc in ar en fa fr; do
+     o=$(grep -o "\[" resources/lang/$loc/app.php | wc -l)
+     c=$(grep -o "\]" resources/lang/$loc/app.php | wc -l)
+     echo "$loc: [ =$o  ] =$c"
+   done
+   ```
+   and the PHP brace/paren sweep over `git status --porcelain` files
+   (see any prior commit message for the exact one-liner used).
+3. **`gymie|lubus` grep sweep** — not re-run for M3 files specifically
+   (should be a non-issue since nothing in M3 touches branding, but
+   confirm rather than assume).
+4. **Commit** — once 1–3 are clean, commit as "Node 4 M3: WhatsApp
+   automations (trigger + branch/wait/tag/webhook builder)", matching
+   the detail level of the M1/M2 commit messages: what was built, the
+   two real bugs caught (transaction-timing on trigger dispatch, the
+   webhook step's silent-on-5xx gap), and the loop-safety-cap design
+   decision and why.
+5. **Human Gate for M3** — present a change summary to the user before
+   touching M4, same pattern as M1/M2.
+
+### Design decisions worth restating if asked
+- **Step JSON contract** lives in the `wa_automations` migration's
+  docblock and is authoritatively implemented in
+  `AutomationStepExecutor::execute()` — if the two ever disagree,
+  the executor is the ground truth since it's what actually runs.
+- **`true_step`/`false_step` are raw step-array indices**, not a
+  friendlier reference. Admin has to count position (0-based). This is
+  a real UX rough edge, disclosed rather than hidden — a nicer
+  "click to select target step" UI is a reasonable future improvement,
+  not attempted here given the effort budget.
+- **`context` column on `wa_automation_runs` is currently unused** — no
+  step type reads or writes it yet. Kept as a forward-compatible
+  placeholder (cheap to keep, clearly documents intent) rather than
+  removed, since the plan's step vocabulary may grow to need
+  cross-step state.
+
 ## Next session — start here
 1. Re-read the plan file for full Node 4 context if anything here is ambiguous.
-2. Run `git status` / `git diff` to see the exact uncommitted state (should match the file list in this doc — if it doesn't, something changed outside this handoff, look before proceeding).
-3. Finish items 1–5 above (tests, CREDITS.md, verification sweep, commit, Human Gate for M1).
-4. Then either continue to M2 (broadcasts) if the user asks, or stop at the M1 gate for review — per the plan, don't barrel into M2 without a checkpoint.
+2. M3 is committed (`8124977`) and awaiting its Human Gate — present the
+   M3 change summary to the user before touching M4.
+3. Once the M3 gate is cleared, continue to M4 (AI assistant + knowledge
+   base) if the user asks — per the plan, don't barrel into M4 without
+   that checkpoint.
 
 ## Environment reminders
 - No `php`, `composer`, or `docker` binaries available here — verification is static only (grep-based brace/bracket balance, targeted WebFetch against upstream docs/source for anything version- or API-specific). Say so plainly rather than implying something was tested when it wasn't.
