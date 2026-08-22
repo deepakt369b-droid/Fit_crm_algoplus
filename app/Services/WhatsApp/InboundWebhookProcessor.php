@@ -19,6 +19,8 @@ use Illuminate\Support\Facades\Log;
  */
 class InboundWebhookProcessor
 {
+    public function __construct(private readonly AutomationTriggerService $triggers) {}
+
     /**
      * @param  array<string, mixed>  $payload
      */
@@ -97,25 +99,32 @@ class InboundWebhookProcessor
         $body = (string) ($message['text']['body'] ?? '');
         $type = (string) ($message['type'] ?? 'unknown');
 
-        DB::transaction(function () use ($phoneNumber, $waId, $metaMessageId, $occurredAt, $body, $type, $profiles): void {
+        // Trigger events fire AFTER the transaction commits, not from
+        // within it: dispatched automation jobs run on a real queue
+        // connection in production, potentially picked up by a worker on
+        // a separate DB connection before an uncommitted transaction
+        // here would be visible to it.
+        [$contact, $wasNewContact, $justOptedIn] = DB::transaction(function () use ($phoneNumber, $waId, $metaMessageId, $occurredAt, $body, $type, $profiles): array {
             $contact = WhatsappContact::query()
                 ->where('gym_id', $phoneNumber->gym_id)
                 ->where('phone', $waId)
                 ->first();
+
+            $wasNewContact = $contact === null;
 
             if ($contact === null) {
                 $contact = WhatsappContact::create([
                     'gym_id' => $phoneNumber->gym_id,
                     'phone' => $waId,
                     'wa_id' => $waId,
-                    'name' => (string) ($profiles->get($waId)['profile']['name'] ?? ''),
+                    'name' => (string) data_get($profiles->get($waId), 'profile.name', ''),
                     'source' => 'inbound',
                 ]);
             }
 
             $contact->forceFill(['last_inbound_at' => $occurredAt])->save();
 
-            $this->applyOptOutIfRequested($contact, $body);
+            $justOptedIn = $this->applyOptOutOrOptIn($contact, $body);
 
             $conversation = WhatsappConversation::query()->firstOrCreate(
                 ['wa_phone_number_id' => $phoneNumber->id, 'wa_contact_id' => $contact->id],
@@ -140,24 +149,53 @@ class InboundWebhookProcessor
                 'body' => $body,
                 'occurred_at' => $occurredAt,
             ]);
+
+            return [$contact, $wasNewContact, $justOptedIn];
         });
+
+        if ($wasNewContact) {
+            $this->triggers->fireEvent('contact_created', $contact, $phoneNumber->id);
+        }
+
+        if ($justOptedIn) {
+            $this->triggers->fireEvent('opted_in', $contact, $phoneNumber->id);
+        }
+
+        if (trim($body) !== '') {
+            $this->triggers->fireKeyword($body, $contact, $phoneNumber->id);
+        }
     }
 
     /**
-     * Honour an incoming "STOP" (case-insensitive) as an immediate,
-     * automatic opt-out — required by Meta's commerce policy and most
-     * messaging regulations, not optional.
+     * Honour "STOP" as an immediate, automatic opt-out (required by
+     * Meta's commerce policy and most messaging regulations, not
+     * optional) and "START" as the reciprocal opt back in. Returns
+     * whether this message just caused an opt-IN, for the opted_in
+     * automation trigger.
      */
-    private function applyOptOutIfRequested(WhatsappContact $contact, string $body): void
+    private function applyOptOutOrOptIn(WhatsappContact $contact, string $body): bool
     {
-        if (strtolower(trim($body)) !== 'stop') {
-            return;
+        $normalized = strtolower(trim($body));
+
+        if ($normalized === 'stop') {
+            $contact->forceFill([
+                'opt_in_status' => 'opted_out',
+                'opted_out_at' => now(),
+            ])->save();
+
+            return false;
         }
 
-        $contact->forceFill([
-            'opt_in_status' => 'opted_out',
-            'opted_out_at' => now(),
-        ])->save();
+        if ($normalized === 'start' && $contact->opt_in_status !== 'opted_in') {
+            $contact->forceFill([
+                'opt_in_status' => 'opted_in',
+                'opted_in_at' => now(),
+            ])->save();
+
+            return true;
+        }
+
+        return false;
     }
 
     /**

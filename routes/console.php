@@ -43,3 +43,13 @@ if ((bool) config('fitcrm-tenancy.enabled', false)) {
         ->onOneServer()
         ->dailyAt('00:00');
 }
+
+// Resume WhatsApp automation runs whose `wait` step has elapsed. Every
+// branch shares this — automation runs aren't split by the tenancy
+// toggle above since WhatsApp marketing doesn't have a per-tenant vs
+// single-tenant command split the way subscriptions/invoices do.
+Schedule::command('fitcrm:automations:resume')
+    ->name('fitcrm-automations-resume')
+    ->withoutOverlapping(5)
+    ->onOneServer()
+    ->everyFiveMinutes();
