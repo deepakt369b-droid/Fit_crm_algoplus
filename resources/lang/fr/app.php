@@ -26,6 +26,7 @@ return [
         'status' => 'Statut',
         'date' => 'Date',
         'created_at' => 'Créé',
+        'updated_at' => 'Mis à jour',
         'email' => 'Email',
         'contact' => 'Téléphone',
         'gender' => 'Genre',
@@ -226,6 +227,10 @@ return [
         'whatsapp_automations' => [
             'singular' => 'Automatisation',
             'plural' => 'Automatisations',
+        ],
+        'whatsapp_knowledge_base_articles' => [
+            'singular' => 'Article de base de connaissances',
+            'plural' => 'Articles de base de connaissances',
         ],
     ],
     'actions' => [
@@ -485,6 +490,13 @@ return [
         'activate' => 'Activer',
         'pause' => 'Suspendre',
         'status_updated' => 'Statut mis à jour.',
+        'ai_suggest_reply' => 'Suggérer une réponse (IA)',
+        'ai_not_configured' => "L'assistant IA est activé mais aucune clé API Anthropic n'est encore configurée.",
+        'ai_needs_inbound_message' => 'Ajoutez au moins un message entrant avant de demander une suggestion.',
+        'ai_suggestion_failed' => 'Impossible de générer une suggestion',
+        'kb_title' => 'Titre',
+        'kb_content' => 'Contenu',
+        'kb_content_helper' => "Présenté à l'assistant IA comme référence lors de la rédaction des réponses.",
     ],
     'filters' => [
         'missing_photo' => 'Photo manquante',
@@ -533,6 +545,7 @@ return [
             'address' => 'Adresse',
             'contact_information' => 'Contact',
             'email' => 'Email',
+            'ai_assistant' => 'Assistant IA',
         ],
         'fields' => [
             'gym_name' => 'Nom de la salle',
@@ -560,6 +573,11 @@ return [
             'discount_percent_available' => 'Remises disponibles (%)',
             'categories' => 'Catégories',
             'expiring_days' => 'Fenêtre (jours) avant expiration',
+            'ai_api_key' => 'Clé API Anthropic',
+            'ai_api_key_helper' => 'Laissez vide lors de la modification pour conserver la clé actuelle.',
+            'ai_model' => 'Modèle',
+            'ai_system_prompt' => 'Prompt système',
+            'ai_system_prompt_helper' => "Instructions supplémentaires pour l'assistant IA, par ex. le ton ou les politiques de votre salle.",
         ],
         'options' => [
             'name_type' => [
@@ -578,6 +596,8 @@ return [
             'prefix' => 'FIT',
             'invoice_email_subject' => 'Facture {invoice_number} - {status}',
             'receipt_email_subject' => 'Paiement reçu - {invoice_number}',
+            'ai_api_key_configured' => '••••••••••• (inchangée)',
+            'ai_api_key_none' => 'sk-ant-...',
         ],
     ],
     'notifications' => [

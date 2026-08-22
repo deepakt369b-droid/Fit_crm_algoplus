@@ -26,6 +26,7 @@ return [
         'status' => 'Status',
         'date' => 'Date',
         'created_at' => 'Created',
+        'updated_at' => 'Updated',
         'email' => 'Email',
         'contact' => 'Contact',
         'gender' => 'Gender',
@@ -226,6 +227,10 @@ return [
         'whatsapp_automations' => [
             'singular' => 'Automation',
             'plural' => 'Automations',
+        ],
+        'whatsapp_knowledge_base_articles' => [
+            'singular' => 'Knowledge Base Article',
+            'plural' => 'Knowledge Base Articles',
         ],
     ],
     'actions' => [
@@ -485,6 +490,13 @@ return [
         'activate' => 'Activate',
         'pause' => 'Pause',
         'status_updated' => 'Status updated.',
+        'ai_suggest_reply' => 'AI Suggest Reply',
+        'ai_not_configured' => 'AI assistant is enabled but no Anthropic API key is configured yet.',
+        'ai_needs_inbound_message' => 'Add at least one incoming message before requesting a suggestion.',
+        'ai_suggestion_failed' => 'Could not generate a suggestion',
+        'kb_title' => 'Title',
+        'kb_content' => 'Content',
+        'kb_content_helper' => 'Shown to the AI assistant as reference material when drafting replies.',
     ],
     'filters' => [
         'missing_photo' => 'Photo missing',
@@ -533,6 +545,7 @@ return [
             'address' => 'Address',
             'contact_information' => 'Contact Information',
             'email' => 'Email',
+            'ai_assistant' => 'AI Assistant',
         ],
         'fields' => [
             'gym_name' => 'Gym Name',
@@ -560,6 +573,11 @@ return [
             'discount_percent_available' => 'Discount percent available',
             'categories' => 'Categories',
             'expiring_days' => 'Expiring soon window (days)',
+            'ai_api_key' => 'Anthropic API Key',
+            'ai_api_key_helper' => 'Leave blank when editing to keep the current key.',
+            'ai_model' => 'Model',
+            'ai_system_prompt' => 'System Prompt',
+            'ai_system_prompt_helper' => "Extra instructions for the AI assistant, e.g. your gym's tone of voice or policies.",
         ],
         'options' => [
             'name_type' => [
@@ -578,6 +596,8 @@ return [
             'prefix' => 'FIT',
             'invoice_email_subject' => 'Invoice {invoice_number} - {status}',
             'receipt_email_subject' => 'Payment received - {invoice_number}',
+            'ai_api_key_configured' => '••••••••••• (unchanged)',
+            'ai_api_key_none' => 'sk-ant-...',
         ],
     ],
     'notifications' => [

@@ -26,6 +26,7 @@ return [
         'status' => 'وضعیت',
         'date' => 'تاریخ',
         'created_at' => 'تاریخ ایجاد',
+        'updated_at' => 'تاریخ به‌روزرسانی',
         'email' => 'ایمیل',
         'contact' => 'اطلاعات تماس',
         'gender' => 'جنسیت',
@@ -226,6 +227,10 @@ return [
         'whatsapp_automations' => [
             'singular' => 'اتوماسیون',
             'plural' => 'اتوماسیون‌ها',
+        ],
+        'whatsapp_knowledge_base_articles' => [
+            'singular' => 'مقاله پایگاه دانش',
+            'plural' => 'مقالات پایگاه دانش',
         ],
     ],
     'actions' => [
@@ -485,6 +490,13 @@ return [
         'activate' => 'فعال‌سازی',
         'pause' => 'توقف موقت',
         'status_updated' => 'وضعیت به‌روزرسانی شد.',
+        'ai_suggest_reply' => 'پیشنهاد پاسخ با هوش مصنوعی',
+        'ai_not_configured' => 'دستیار هوش مصنوعی فعال است اما هنوز کلید Anthropic API تنظیم نشده است.',
+        'ai_needs_inbound_message' => 'قبل از درخواست پیشنهاد، حداقل یک پیام دریافتی اضافه کنید.',
+        'ai_suggestion_failed' => 'تولید پیشنهاد ممکن نشد',
+        'kb_title' => 'عنوان',
+        'kb_content' => 'محتوا',
+        'kb_content_helper' => 'به عنوان مرجع در اختیار دستیار هوش مصنوعی هنگام نگارش پاسخ‌ها قرار می‌گیرد.',
     ],
     'filters' => [
         'missing_photo' => 'عکس ندارد',
@@ -533,6 +545,7 @@ return [
             'address' => 'نشانی',
             'contact_information' => 'اطلاعات تماس',
             'email' => 'ایمیل سیستم',
+            'ai_assistant' => 'دستیار هوش مصنوعی',
         ],
         'fields' => [
             'gym_name' => 'نام باشگاه',
@@ -560,6 +573,11 @@ return [
             'discount_percent_available' => 'درصد تخفیف‌های در دسترس',
             'categories' => 'دسته‌بندی‌ها',
             'expiring_days' => 'بازه زمانی هشدار انقضا (روز)',
+            'ai_api_key' => 'کلید Anthropic API',
+            'ai_api_key_helper' => 'برای نگه‌داشتن کلید فعلی، هنگام ویرایش این فیلد را خالی بگذارید.',
+            'ai_model' => 'مدل',
+            'ai_system_prompt' => 'دستور سیستم (System Prompt)',
+            'ai_system_prompt_helper' => 'دستورالعمل‌های اضافی برای دستیار هوش مصنوعی، مانند لحن یا سیاست‌های باشگاه شما.',
         ],
         'options' => [
             'name_type' => [
@@ -578,6 +596,8 @@ return [
             'prefix' => 'FIT',
             'invoice_email_subject' => 'فاکتور شماره {invoice_number} - {status}',
             'receipt_email_subject' => 'پرداخت دریافت شد - فاکتور {invoice_number}',
+            'ai_api_key_configured' => '••••••••••• (بدون تغییر)',
+            'ai_api_key_none' => 'sk-ant-...',
         ],
     ],
     'notifications' => [

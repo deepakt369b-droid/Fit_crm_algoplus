@@ -4,8 +4,10 @@ namespace App\Filament\Resources\WhatsappConversations\Pages;
 
 use App\Filament\Resources\WhatsappConversations\Schemas\WhatsappConversationInfolist;
 use App\Filament\Resources\WhatsappConversations\WhatsappConversationResource;
+use App\Helpers\Helpers;
 use App\Models\WhatsappConversation;
 use App\Models\WhatsappTemplate;
+use App\Services\WhatsApp\AiReplyAssistant;
 use App\Services\WhatsApp\OutboundMessageSender;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
@@ -18,6 +20,13 @@ use RuntimeException;
 class ViewWhatsappConversation extends ViewRecord
 {
     protected static string $resource = WhatsappConversationResource::class;
+
+    /**
+     * Holds the last AI-drafted reply so the "reply" action's Textarea
+     * can default to it when opened right after "AI Suggest Reply" -
+     * never sent automatically, staff still review/edit before sending.
+     */
+    public ?string $aiSuggestedReply = null;
 
     public function infolist(Schema $schema): Schema
     {
@@ -39,6 +48,23 @@ class ViewWhatsappConversation extends ViewRecord
         $withinWindow = $conversation->contact->isWithinServiceWindow();
 
         return [
+            Action::make('aiSuggestReply')
+                ->label(__('app.whatsapp.ai_suggest_reply'))
+                ->icon('heroicon-o-sparkles')
+                ->color('gray')
+                ->visible($withinWindow && Helpers::marketingFeatureEnabled('ai_assistant'))
+                ->action(function () use ($conversation): void {
+                    try {
+                        $this->aiSuggestedReply = app(AiReplyAssistant::class)->suggestReply($conversation);
+                        $this->mountAction('reply');
+                    } catch (RuntimeException $exception) {
+                        Notification::make()
+                            ->title(__('app.whatsapp.ai_suggestion_failed'))
+                            ->body($exception->getMessage())
+                            ->danger()
+                            ->send();
+                    }
+                }),
             Action::make('reply')
                 ->label(__('app.whatsapp.reply'))
                 ->icon('heroicon-o-paper-airplane')
@@ -48,6 +74,7 @@ class ViewWhatsappConversation extends ViewRecord
                         ->label(__('app.whatsapp.message_body'))
                         ->required()
                         ->rows(4)
+                        ->default(fn () => $this->aiSuggestedReply)
                         ->visible($withinWindow),
                     Select::make('template_id')
                         ->label(__('app.whatsapp.select_template'))
@@ -75,6 +102,8 @@ class ViewWhatsappConversation extends ViewRecord
                                 sentByUserId: auth()->id(),
                             );
                         }
+
+                        $this->aiSuggestedReply = null;
 
                         Notification::make()
                             ->title(__('app.whatsapp.message_sent'))

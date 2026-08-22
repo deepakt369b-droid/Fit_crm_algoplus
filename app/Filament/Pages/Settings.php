@@ -4,9 +4,12 @@ namespace App\Filament\Pages;
 
 use App\Contracts\SettingsRepository;
 use App\Helpers\Helpers;
+use App\Models\WhatsappAiSetting;
+use App\Services\WhatsApp\AiReplyAssistant;
 use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
@@ -62,7 +65,23 @@ class Settings extends Page implements HasForms
 
         $this->data['general'] = $general;
 
-        $this->form->fill($settings);
+        // AI assistant settings live in their own gym-scoped table (see
+        // WhatsappAiSetting), not the JSON settings blob - encrypted API
+        // keys don't belong sitting in plain JSON. Loaded here as
+        // transient form fields under the same 'marketing' prefix for a
+        // single unified tab; save() writes them back out to that table
+        // and strips them before persisting the rest of $settings.
+        $aiSetting = WhatsappAiSetting::query()->first();
+        $marketing = is_array($this->data['marketing'] ?? null) ? $this->data['marketing'] : [];
+        $marketing['ai_model'] = $aiSetting->model ?? AiReplyAssistant::DEFAULT_MODEL;
+        $marketing['ai_system_prompt'] = $aiSetting->system_prompt ?? null;
+        $marketing['ai_has_key'] = $aiSetting !== null && filled($aiSetting->anthropic_api_key);
+        $this->data['marketing'] = $marketing;
+
+        // Fill from $this->data, not $settings - it now carries the
+        // ai_* additions above that $settings doesn't have. Every other
+        // key is identical between the two at this point.
+        $this->form->fill($this->data);
     }
 
     public function getTitle(): string
@@ -109,21 +128,48 @@ class Settings extends Page implements HasForms
             ->schema([
                 Toggle::make('marketing.inbox')
                     ->label(__('app.whatsapp.feature_inbox')),
+                // broadcasts (M2) and automations (M3) shipped in earlier
+                // milestones - the "not yet available" helper text was
+                // never removed for them until now.
                 Toggle::make('marketing.broadcasts')
-                    ->label(__('app.whatsapp.feature_broadcasts'))
-                    ->helperText(__('app.whatsapp.feature_not_yet_available')),
+                    ->label(__('app.whatsapp.feature_broadcasts')),
                 Toggle::make('marketing.automations')
-                    ->label(__('app.whatsapp.feature_automations'))
-                    ->helperText(__('app.whatsapp.feature_not_yet_available')),
+                    ->label(__('app.whatsapp.feature_automations')),
                 Toggle::make('marketing.pipelines')
                     ->label(__('app.whatsapp.feature_pipelines'))
                     ->helperText(__('app.whatsapp.feature_not_yet_available')),
                 Toggle::make('marketing.ai_assistant')
                     ->label(__('app.whatsapp.feature_ai_assistant'))
-                    ->helperText(__('app.whatsapp.feature_not_yet_available')),
+                    ->reactive(),
                 Toggle::make('marketing.knowledge_base')
-                    ->label(__('app.whatsapp.feature_knowledge_base'))
-                    ->helperText(__('app.whatsapp.feature_not_yet_available')),
+                    ->label(__('app.whatsapp.feature_knowledge_base')),
+                Fieldset::make(__('app.settings.sections.ai_assistant'))
+                    ->columns(1)
+                    ->visible(fn ($get) => (bool) $get('marketing.ai_assistant'))
+                    ->schema([
+                        Hidden::make('marketing.ai_has_key'),
+                        TextInput::make('marketing.ai_api_key')
+                            ->label(__('app.settings.fields.ai_api_key'))
+                            ->password()
+                            ->revealable()
+                            ->placeholder(fn ($get) => $get('marketing.ai_has_key')
+                                ? __('app.settings.placeholders.ai_api_key_configured')
+                                : __('app.settings.placeholders.ai_api_key_none'))
+                            ->helperText(__('app.settings.fields.ai_api_key_helper')),
+                        Select::make('marketing.ai_model')
+                            ->label(__('app.settings.fields.ai_model'))
+                            ->options([
+                                'claude-opus-5' => 'Claude Opus 5',
+                                'claude-sonnet-5' => 'Claude Sonnet 5',
+                                'claude-haiku-4-5' => 'Claude Haiku 4.5',
+                            ])
+                            ->default('claude-opus-5')
+                            ->required(),
+                        Textarea::make('marketing.ai_system_prompt')
+                            ->label(__('app.settings.fields.ai_system_prompt'))
+                            ->rows(3)
+                            ->helperText(__('app.settings.fields.ai_system_prompt_helper')),
+                    ]),
             ]);
     }
 
@@ -426,9 +472,32 @@ class Settings extends Page implements HasForms
 
         $settings['general'] = $general;
 
+        // AI assistant fields are transient UI-only keys backed by
+        // WhatsappAiSetting (see mount()), not the JSON settings blob,
+        // which is not encrypted at rest. $settings (persisted) never
+        // carries them; $uiMarketing (kept in $this->data for display
+        // only) gets them re-derived from what was actually saved.
+        $uiMarketing = is_array($settings['marketing'] ?? null) ? $settings['marketing'] : [];
+        $aiApiKey = is_string($uiMarketing['ai_api_key'] ?? null) ? $uiMarketing['ai_api_key'] : null;
+        $aiModel = is_string($uiMarketing['ai_model'] ?? null) ? $uiMarketing['ai_model'] : null;
+        $aiSystemPrompt = is_string($uiMarketing['ai_system_prompt'] ?? null) ? $uiMarketing['ai_system_prompt'] : null;
+        $settings['marketing'] = collect($uiMarketing)
+            ->except(['ai_api_key', 'ai_model', 'ai_system_prompt', 'ai_has_key'])
+            ->all();
+
         try {
+            $aiSetting = $this->saveAiSettings($aiApiKey, $aiModel, $aiSystemPrompt);
+
             app(SettingsRepository::class)->put($settings);
+
+            // Reflect what was actually persisted in the form's display
+            // state - the key itself is never redisplayed.
+            $uiMarketing['ai_model'] = $aiSetting->model;
+            $uiMarketing['ai_system_prompt'] = $aiSetting->system_prompt;
+            $uiMarketing['ai_has_key'] = filled($aiSetting->anthropic_api_key);
+            unset($uiMarketing['ai_api_key']);
             $this->data = $settings;
+            $this->data['marketing'] = $uiMarketing;
         } catch (\Throwable $exception) {
             report($exception);
 
@@ -473,5 +542,26 @@ class Settings extends Page implements HasForms
 
         // Update the form state
         $set("general.$key", [$path]);
+    }
+
+    /**
+     * Persist the AI assistant's per-branch settings (see mount()'s
+     * docblock). A blank submitted API key leaves the stored one
+     * untouched - the same "leave blank to keep the current value"
+     * convention already used for wa_phone_numbers.access_token.
+     */
+    private function saveAiSettings(?string $apiKey, ?string $model, ?string $systemPrompt): WhatsappAiSetting
+    {
+        $setting = WhatsappAiSetting::query()->first() ?? new WhatsappAiSetting;
+
+        if (filled($apiKey)) {
+            $setting->anthropic_api_key = $apiKey;
+        }
+
+        $setting->model = filled($model) ? $model : AiReplyAssistant::DEFAULT_MODEL;
+        $setting->system_prompt = filled($systemPrompt) ? $systemPrompt : null;
+        $setting->save();
+
+        return $setting;
     }
 }

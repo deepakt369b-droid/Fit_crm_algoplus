@@ -26,6 +26,7 @@ return [
         'status' => 'الحالة',
         'date' => 'التاريخ',
         'created_at' => 'تم الانشاء',
+        'updated_at' => 'تم التحديث',
         'email' => 'البريد الالكتروني',
         'contact' => 'رقم الهاتف',
         'gender' => 'الجنس',
@@ -226,6 +227,10 @@ return [
         'whatsapp_automations' => [
             'singular' => 'أتمتة',
             'plural' => 'الأتمتة',
+        ],
+        'whatsapp_knowledge_base_articles' => [
+            'singular' => 'مقالة قاعدة المعرفة',
+            'plural' => 'مقالات قاعدة المعرفة',
         ],
     ],
     'actions' => [
@@ -485,6 +490,13 @@ return [
         'activate' => 'تفعيل',
         'pause' => 'إيقاف مؤقت',
         'status_updated' => 'تم تحديث الحالة.',
+        'ai_suggest_reply' => 'اقتراح رد بالذكاء الاصطناعي',
+        'ai_not_configured' => 'مساعد الذكاء الاصطناعي مفعّل لكن لم يتم إعداد مفتاح Anthropic API بعد.',
+        'ai_needs_inbound_message' => 'أضف رسالة واردة واحدة على الأقل قبل طلب اقتراح.',
+        'ai_suggestion_failed' => 'تعذّر إنشاء اقتراح',
+        'kb_title' => 'العنوان',
+        'kb_content' => 'المحتوى',
+        'kb_content_helper' => 'يُعرض لمساعد الذكاء الاصطناعي كمرجع عند صياغة الردود.',
     ],
     'filters' => [
         'missing_photo' => 'الصورة مفقودة',
@@ -533,6 +545,7 @@ return [
             'address' => 'العنوان',
             'contact_information' => 'معلومات التواصل',
             'email' => 'البريد الالكتروني',
+            'ai_assistant' => 'مساعد الذكاء الاصطناعي',
         ],
         'fields' => [
             'gym_name' => 'اسم النادي',
@@ -560,6 +573,11 @@ return [
             'discount_percent_available' => 'نسب الخصم المتاحة',
             'categories' => 'الفئات',
             'expiring_days' => 'نافذة انتهاء الصلاحية (ايام)',
+            'ai_api_key' => 'مفتاح Anthropic API',
+            'ai_api_key_helper' => 'اتركه فارغًا عند التعديل للإبقاء على المفتاح الحالي.',
+            'ai_model' => 'النموذج',
+            'ai_system_prompt' => 'التوجيه الأساسي (System Prompt)',
+            'ai_system_prompt_helper' => 'تعليمات إضافية لمساعد الذكاء الاصطناعي، مثل أسلوب النادي أو سياساته.',
         ],
         'options' => [
             'name_type' => [
@@ -578,6 +596,8 @@ return [
             'prefix' => 'FIT',
             'invoice_email_subject' => 'فاتورة {invoice_number} - {status}',
             'receipt_email_subject' => 'تم استلام الدفع - {invoice_number}',
+            'ai_api_key_configured' => '••••••••••• (لم يتغيّر)',
+            'ai_api_key_none' => 'sk-ant-...',
         ],
     ],
     'notifications' => [

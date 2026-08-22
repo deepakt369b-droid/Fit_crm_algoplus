@@ -18,6 +18,7 @@ use App\Filament\Resources\WhatsappContacts\WhatsappContactResource;
 use App\Filament\Resources\WhatsappAutomations\WhatsappAutomationResource;
 use App\Filament\Resources\WhatsappBroadcasts\WhatsappBroadcastResource;
 use App\Filament\Resources\WhatsappConversations\WhatsappConversationResource;
+use App\Filament\Resources\WhatsappKnowledgeBaseArticles\WhatsappKnowledgeBaseArticleResource;
 use App\Filament\Resources\WhatsappPhoneNumbers\WhatsappPhoneNumberResource;
 use App\Filament\Resources\WhatsappTemplates\WhatsappTemplateResource;
 use App\Http\Middleware\SetAppLocale;
@@ -183,6 +184,7 @@ class AdminPanelProvider extends PanelProvider
             ...WhatsappConversationResource::getNavigationItems(),
             ...WhatsappBroadcastResource::getNavigationItems(),
             ...WhatsappAutomationResource::getNavigationItems(),
+            ...WhatsappKnowledgeBaseArticleResource::getNavigationItems(),
             ...WhatsappContactResource::getNavigationItems(),
             ...WhatsappTemplateResource::getNavigationItems(),
             ...WhatsappPhoneNumberResource::getNavigationItems(),
