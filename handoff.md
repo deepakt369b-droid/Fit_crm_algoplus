@@ -22,8 +22,24 @@
 > full message). The "M3 status — pick up here" section below is kept
 > as-is for the historical record of what was in progress at the time;
 > treat "uncommitted"/"pick up here" language there as describing that
-> point in time, not the current state. **Awaiting the M3 Human Gate**
-> (per-milestone review) before starting M4 — see "Next session" below.
+> point in time, not the current state.
+>
+> **Fourth update:** the user asked to proceed straight to M4 without a
+> pause at the M3 gate, so M4 (AI reply assistant + knowledge base) is
+> now also complete and committed as `5e70cff` — new `anthropic-ai/sdk`
+> dependency, `wa_ai_settings`/`wa_knowledge_base_articles` schema, the
+> `AiReplyAssistant` service behind an `AnthropicMessagesClient` seam
+> for testability, a `WhatsappKnowledgeBaseArticleResource`, an "AI
+> Suggest Reply" action on the conversation view, and a new AI Assistant
+> section in the superadmin Marketing settings tab. Two real bugs caught
+> before commit: `AiReplyAssistant` checked `direction === 'inbound'`
+> when the schema actually uses `'in'`/`'out'` (would have made every
+> suggestion request fail), and `Settings::mount()` discarded its own
+> AI-field additions by filling the form from the wrong variable. Full
+> detail in the commit message — see `git log`. **Node 4 (M1–M4) is now
+> functionally complete.** Awaiting a Human Gate review of M4 (and, if
+> the user wants it, a combined look back at the whole node) before
+> considering the WhatsApp merge done.
 
 Working directory: `C:\Users\DK\Downloads\FitCRM\Fit_crm_algoplus` (git repo, not pushed anywhere).
 Plan file: `C:\Users\DK\.claude\plans\markdown-system-directive-rebrand-whimsical-hummingbird.md` — read this first for full context, decisions, and rationale.
@@ -201,11 +217,18 @@ not committed**. `git status` shows 19 files (5 modified, 14 new).
 
 ## Next session — start here
 1. Re-read the plan file for full Node 4 context if anything here is ambiguous.
-2. M3 is committed (`8124977`) and awaiting its Human Gate — present the
-   M3 change summary to the user before touching M4.
-3. Once the M3 gate is cleared, continue to M4 (AI assistant + knowledge
-   base) if the user asks — per the plan, don't barrel into M4 without
-   that checkpoint.
+2. Node 4 is functionally complete: M1 (`git log` for the commit),
+   M2 (`f03818c`), M3 (`8124977`), M4 (`5e70cff`). Nothing is
+   uncommitted as of this update.
+3. Run `composer update anthropic-ai/sdk` (or a full `composer update`)
+   before `composer install` will succeed — M4 added a dependency the
+   committed `composer.lock` doesn't know about yet.
+4. Present a combined Human Gate for the whole WhatsApp merge (or just
+   M4, if the user already reviewed M1–M3 separately) before treating
+   Node 4 as done. Once cleared, the only environment this has ever run
+   in is static analysis — the very first real validation should be
+   `composer install && php artisan test` on a machine with PHP 8.2, or
+   the first CI/Coolify build.
 
 ## Environment reminders
 - No `php`, `composer`, or `docker` binaries available here — verification is static only (grep-based brace/bracket balance, targeted WebFetch against upstream docs/source for anything version- or API-specific). Say so plainly rather than implying something was tested when it wasn't.
