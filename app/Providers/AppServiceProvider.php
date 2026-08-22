@@ -2,10 +2,11 @@
 
 namespace App\Providers;
 
-use App\Contracts\AnthropicMessagesClient;
+use App\Contracts\AiChatClientFactory;
 use App\Contracts\SequenceRepository;
 use App\Contracts\SettingsRepository;
 use App\Contracts\TenantContext;
+use App\Contracts\UrlSafetyChecker;
 use App\Helpers\Helpers;
 use App\Models\Invoice;
 use App\Models\InvoiceTransaction;
@@ -15,7 +16,8 @@ use App\Services\Api\Docs\AddIndexQueryParametersTransformer;
 use App\Services\DatabaseSettingsRepository;
 use App\Services\JsonSequenceRepository;
 use App\Services\ResolvedTenantContext;
-use App\Services\WhatsApp\AnthropicSdkMessagesClient;
+use App\Services\WhatsApp\Ai\AiChatClientFactory as ConcreteAiChatClientFactory;
+use App\Services\WhatsApp\Support\DnsUrlSafetyChecker;
 use App\Support\Data;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
@@ -58,7 +60,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(SettingsRepository::class, DatabaseSettingsRepository::class);
         $this->app->singleton(SequenceRepository::class, JsonSequenceRepository::class);
         $this->app->singletonIf(TenantContext::class, ResolvedTenantContext::class);
-        $this->app->bind(AnthropicMessagesClient::class, AnthropicSdkMessagesClient::class);
+        $this->app->bind(AiChatClientFactory::class, ConcreteAiChatClientFactory::class);
+        $this->app->bind(UrlSafetyChecker::class, DnsUrlSafetyChecker::class);
     }
 
     /**

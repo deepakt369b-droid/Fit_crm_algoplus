@@ -20,10 +20,19 @@ WORKDIR /app
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
 
+# Cached independently of application source: npm ci (network-bound,
+# the slowest single step in this build) only re-runs when
+# package.json/package-lock.json actually change, instead of on every
+# deploy regardless of what changed — COPY . . below invalidates every
+# layer after it on any code change, so anything before it that
+# shouldn't re-run on every commit has to be copied and installed
+# ahead of that line, same reasoning as the composer layer above it.
+COPY package.json package-lock.json ./
+RUN npm ci
+
 COPY . .
 RUN composer dump-autoload --optimize --no-dev
-
-RUN npm ci && npm run build && rm -rf node_modules
+RUN npm run build && rm -rf node_modules
 
 # ---- Runtime stage ----
 FROM php:8.2-fpm-alpine AS runtime

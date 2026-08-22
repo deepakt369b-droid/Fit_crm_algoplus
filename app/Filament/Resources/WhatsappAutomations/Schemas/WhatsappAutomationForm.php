@@ -40,6 +40,7 @@ class WhatsappAutomationForm
                     ->label(__('app.whatsapp.applies_to_number'))
                     ->options(fn (): array => WhatsappPhoneNumber::query()->pluck('display_phone_number', 'id')->all())
                     ->placeholder(__('app.whatsapp.any_number'))
+                    ->live()
                     ->columnSpanFull(),
                 Repeater::make('steps')
                     ->label(__('app.whatsapp.steps'))
@@ -71,7 +72,30 @@ class WhatsappAutomationForm
                             ->required(),
                         Select::make('template_id')
                             ->label(__('app.resources.whatsapp_templates.singular'))
-                            ->options(fn (): array => WhatsappTemplate::query()->where('status', 'approved')->pluck('name', 'id')->all())
+                            // Scoped to the automation's own phone number
+                            // (set above, outside this repeater — hence
+                            // '../..') so staff can't even see, let alone
+                            // pick, another number's/branch's templates
+                            // here. AutomationStepExecutor::sendTemplate()
+                            // re-checks this server-side regardless, since
+                            // this is Livewire state and therefore
+                            // client-editable.
+                            ->options(function (callable $get): array {
+                                $phoneNumberId = $get('../../wa_phone_number_id');
+
+                                if (blank($phoneNumberId)) {
+                                    return [];
+                                }
+
+                                return WhatsappTemplate::query()
+                                    ->where('wa_phone_number_id', $phoneNumberId)
+                                    ->where('status', 'approved')
+                                    ->pluck('name', 'id')
+                                    ->all();
+                            })
+                            ->helperText(fn (callable $get): ?string => blank($get('../../wa_phone_number_id'))
+                                ? __('app.whatsapp.select_number_first')
+                                : null)
                             ->visible(fn (callable $get): bool => $get('type') === 'send_template')
                             ->required(fn (callable $get): bool => $get('type') === 'send_template'),
                         Select::make('tag_id')

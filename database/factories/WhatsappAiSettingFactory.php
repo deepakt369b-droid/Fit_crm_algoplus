@@ -15,7 +15,9 @@ class WhatsappAiSettingFactory extends Factory
     public function definition(): array
     {
         return [
-            'anthropic_api_key' => 'sk-ant-test-'.$this->faker->uuid(),
+            'provider' => 'anthropic',
+            'api_key' => 'sk-ant-test-'.$this->faker->uuid(),
+            'base_url' => null,
             'model' => 'claude-opus-5',
             'system_prompt' => null,
         ];

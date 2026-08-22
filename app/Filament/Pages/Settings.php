@@ -73,9 +73,11 @@ class Settings extends Page implements HasForms
         // and strips them before persisting the rest of $settings.
         $aiSetting = WhatsappAiSetting::query()->first();
         $marketing = is_array($this->data['marketing'] ?? null) ? $this->data['marketing'] : [];
+        $marketing['ai_provider'] = $aiSetting->provider ?? AiReplyAssistant::DEFAULT_PROVIDER;
         $marketing['ai_model'] = $aiSetting->model ?? AiReplyAssistant::DEFAULT_MODEL;
+        $marketing['ai_base_url'] = $aiSetting->base_url ?? null;
         $marketing['ai_system_prompt'] = $aiSetting->system_prompt ?? null;
-        $marketing['ai_has_key'] = $aiSetting !== null && filled($aiSetting->anthropic_api_key);
+        $marketing['ai_has_key'] = $aiSetting !== null && filled($aiSetting->api_key);
         $this->data['marketing'] = $marketing;
 
         // Fill from $this->data, not $settings - it now carries the
@@ -148,6 +150,17 @@ class Settings extends Page implements HasForms
                     ->visible(fn ($get) => (bool) $get('marketing.ai_assistant'))
                     ->schema([
                         Hidden::make('marketing.ai_has_key'),
+                        Select::make('marketing.ai_provider')
+                            ->label(__('app.settings.fields.ai_provider'))
+                            ->options([
+                                'anthropic' => __('app.settings.ai_providers.anthropic'),
+                                'openai' => __('app.settings.ai_providers.openai'),
+                                'kimi' => __('app.settings.ai_providers.kimi'),
+                                'glm' => __('app.settings.ai_providers.glm'),
+                            ])
+                            ->default('anthropic')
+                            ->live()
+                            ->required(),
                         TextInput::make('marketing.ai_api_key')
                             ->label(__('app.settings.fields.ai_api_key'))
                             ->password()
@@ -156,6 +169,12 @@ class Settings extends Page implements HasForms
                                 ? __('app.settings.placeholders.ai_api_key_configured')
                                 : __('app.settings.placeholders.ai_api_key_none'))
                             ->helperText(__('app.settings.fields.ai_api_key_helper')),
+                        // A fixed Select for Anthropic (its model IDs are
+                        // known and stable in this codebase already), but
+                        // free text for the other three providers — their
+                        // model catalogs move too fast to hardcode without
+                        // risking a stale/wrong option list going stale
+                        // and silently breaking replies.
                         Select::make('marketing.ai_model')
                             ->label(__('app.settings.fields.ai_model'))
                             ->options([
@@ -164,7 +183,25 @@ class Settings extends Page implements HasForms
                                 'claude-haiku-4-5' => 'Claude Haiku 4.5',
                             ])
                             ->default('claude-opus-5')
-                            ->required(),
+                            ->visible(fn ($get) => $get('marketing.ai_provider') === 'anthropic' || blank($get('marketing.ai_provider')))
+                            ->dehydrated(fn ($get) => $get('marketing.ai_provider') === 'anthropic' || blank($get('marketing.ai_provider')))
+                            ->required(fn ($get) => $get('marketing.ai_provider') === 'anthropic' || blank($get('marketing.ai_provider'))),
+                        TextInput::make('marketing.ai_model')
+                            ->label(__('app.settings.fields.ai_model'))
+                            ->placeholder(fn ($get) => match ($get('marketing.ai_provider')) {
+                                'openai' => 'gpt-4o',
+                                'kimi' => 'kimi-k2.6',
+                                'glm' => 'glm-4.6',
+                                default => null,
+                            })
+                            ->helperText(__('app.settings.fields.ai_model_helper'))
+                            ->visible(fn ($get) => in_array($get('marketing.ai_provider'), ['openai', 'kimi', 'glm'], true))
+                            ->dehydrated(fn ($get) => in_array($get('marketing.ai_provider'), ['openai', 'kimi', 'glm'], true))
+                            ->required(fn ($get) => in_array($get('marketing.ai_provider'), ['openai', 'kimi', 'glm'], true)),
+                        TextInput::make('marketing.ai_base_url')
+                            ->label(__('app.settings.fields.ai_base_url'))
+                            ->url()
+                            ->helperText(__('app.settings.fields.ai_base_url_helper')),
                         Textarea::make('marketing.ai_system_prompt')
                             ->label(__('app.settings.fields.ai_system_prompt'))
                             ->rows(3)
@@ -478,23 +515,27 @@ class Settings extends Page implements HasForms
         // carries them; $uiMarketing (kept in $this->data for display
         // only) gets them re-derived from what was actually saved.
         $uiMarketing = is_array($settings['marketing'] ?? null) ? $settings['marketing'] : [];
+        $aiProvider = is_string($uiMarketing['ai_provider'] ?? null) ? $uiMarketing['ai_provider'] : null;
         $aiApiKey = is_string($uiMarketing['ai_api_key'] ?? null) ? $uiMarketing['ai_api_key'] : null;
         $aiModel = is_string($uiMarketing['ai_model'] ?? null) ? $uiMarketing['ai_model'] : null;
+        $aiBaseUrl = is_string($uiMarketing['ai_base_url'] ?? null) ? $uiMarketing['ai_base_url'] : null;
         $aiSystemPrompt = is_string($uiMarketing['ai_system_prompt'] ?? null) ? $uiMarketing['ai_system_prompt'] : null;
         $settings['marketing'] = collect($uiMarketing)
-            ->except(['ai_api_key', 'ai_model', 'ai_system_prompt', 'ai_has_key'])
+            ->except(['ai_provider', 'ai_api_key', 'ai_model', 'ai_base_url', 'ai_system_prompt', 'ai_has_key'])
             ->all();
 
         try {
-            $aiSetting = $this->saveAiSettings($aiApiKey, $aiModel, $aiSystemPrompt);
+            $aiSetting = $this->saveAiSettings($aiProvider, $aiApiKey, $aiModel, $aiBaseUrl, $aiSystemPrompt);
 
             app(SettingsRepository::class)->put($settings);
 
             // Reflect what was actually persisted in the form's display
             // state - the key itself is never redisplayed.
+            $uiMarketing['ai_provider'] = $aiSetting->provider;
             $uiMarketing['ai_model'] = $aiSetting->model;
+            $uiMarketing['ai_base_url'] = $aiSetting->base_url;
             $uiMarketing['ai_system_prompt'] = $aiSetting->system_prompt;
-            $uiMarketing['ai_has_key'] = filled($aiSetting->anthropic_api_key);
+            $uiMarketing['ai_has_key'] = filled($aiSetting->api_key);
             unset($uiMarketing['ai_api_key']);
             $this->data = $settings;
             $this->data['marketing'] = $uiMarketing;
@@ -550,15 +591,17 @@ class Settings extends Page implements HasForms
      * untouched - the same "leave blank to keep the current value"
      * convention already used for wa_phone_numbers.access_token.
      */
-    private function saveAiSettings(?string $apiKey, ?string $model, ?string $systemPrompt): WhatsappAiSetting
+    private function saveAiSettings(?string $provider, ?string $apiKey, ?string $model, ?string $baseUrl, ?string $systemPrompt): WhatsappAiSetting
     {
         $setting = WhatsappAiSetting::query()->first() ?? new WhatsappAiSetting;
 
         if (filled($apiKey)) {
-            $setting->anthropic_api_key = $apiKey;
+            $setting->api_key = $apiKey;
         }
 
+        $setting->provider = filled($provider) ? $provider : AiReplyAssistant::DEFAULT_PROVIDER;
         $setting->model = filled($model) ? $model : AiReplyAssistant::DEFAULT_MODEL;
+        $setting->base_url = filled($baseUrl) ? $baseUrl : null;
         $setting->system_prompt = filled($systemPrompt) ? $systemPrompt : null;
         $setting->save();
 

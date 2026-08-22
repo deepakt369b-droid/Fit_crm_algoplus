@@ -1,5 +1,6 @@
 <?php
 
+use App\Contracts\UrlSafetyChecker;
 use App\Models\Gym;
 use App\Models\WhatsappAutomation;
 use App\Models\WhatsappAutomationRun;
@@ -12,6 +13,36 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 
 uses(RefreshDatabase::class);
+
+/**
+ * These tests exercise AutomationStepExecutor's own logic, not DNS
+ * resolution — bind a permissive fake so the real DnsUrlSafetyChecker
+ * (which does a live DNS lookup) never runs against network-dependent
+ * or intentionally non-resolving test domains like example.test.
+ * The SSRF guard itself has its own dedicated unit tests — see
+ * tests/Unit/Services/WhatsApp/Support/DnsUrlSafetyCheckerTest.php.
+ */
+function bindPermissiveUrlSafetyChecker(): void
+{
+    app()->bind(UrlSafetyChecker::class, fn () => new class implements UrlSafetyChecker
+    {
+        public function isSafe(string $url): bool
+        {
+            return true;
+        }
+    });
+}
+
+function bindUnsafeUrlSafetyChecker(): void
+{
+    app()->bind(UrlSafetyChecker::class, fn () => new class implements UrlSafetyChecker
+    {
+        public function isSafe(string $url): bool
+        {
+            return false;
+        }
+    });
+}
 
 function makeAutomationRun(array $automationOverrides = [], array $contactOverrides = []): WhatsappAutomationRun
 {
@@ -115,6 +146,7 @@ it('branches a condition to the false step when it does not match', function ():
 });
 
 it('calls a webhook and advances even if the webhook endpoint fails', function (): void {
+    bindPermissiveUrlSafetyChecker();
     Http::fake([
         'example.test/*' => Http::response('', 500),
     ]);
@@ -129,6 +161,35 @@ it('calls a webhook and advances even if the webhook endpoint fails', function (
 
     expect($outcome['action'])->toBe('advance');
     Http::assertSent(fn ($request): bool => $request->url() === 'https://example.test/hook');
+});
+
+it('fails a webhook step whose URL is not safe, without making any request', function (): void {
+    bindUnsafeUrlSafetyChecker();
+    Http::fake();
+
+    $run = makeAutomationRun();
+
+    $outcome = app(AutomationStepExecutor::class)->execute($run->automation, $run, [
+        'type' => 'webhook',
+        'url' => 'http://169.254.169.254/latest/meta-data/',
+        'method' => 'POST',
+    ]);
+
+    expect($outcome['action'])->toBe('fail');
+    Http::assertNothingSent();
+});
+
+it('fails a send_template step when the template belongs to a different phone number', function (): void {
+    $run = makeAutomationRun();
+    $otherPhoneNumber = WhatsappPhoneNumber::factory()->create();
+    $foreignTemplate = WhatsappTemplate::factory()->for($otherPhoneNumber, 'phoneNumber')->create(['status' => 'approved']);
+
+    $outcome = app(AutomationStepExecutor::class)->execute($run->automation, $run, [
+        'type' => 'send_template',
+        'template_id' => $foreignTemplate->id,
+    ]);
+
+    expect($outcome['action'])->toBe('fail');
 });
 
 it('fails on an unknown step type', function (): void {

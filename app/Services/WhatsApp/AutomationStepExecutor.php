@@ -2,6 +2,7 @@
 
 namespace App\Services\WhatsApp;
 
+use App\Contracts\UrlSafetyChecker;
 use App\Models\WhatsappAutomation;
 use App\Models\WhatsappAutomationRun;
 use App\Models\WhatsappContact;
@@ -23,7 +24,10 @@ use Throwable;
  */
 class AutomationStepExecutor
 {
-    public function __construct(private readonly OutboundMessageSender $sender) {}
+    public function __construct(
+        private readonly OutboundMessageSender $sender,
+        private readonly UrlSafetyChecker $urlSafetyChecker,
+    ) {}
 
     /**
      * @param  array<string, mixed>  $step
@@ -58,6 +62,20 @@ class AutomationStepExecutor
 
         if ($template === null) {
             return ['action' => 'fail', 'error' => 'Template not found for send_template step.'];
+        }
+
+        // A template belongs to exactly one phone number (Meta approves
+        // templates per-WABA, and wa_templates is unique on
+        // [wa_phone_number_id, name, language]) — that's the real
+        // tenant boundary here, not gym_id, which can be null on both
+        // sides for a shared number. The Filament form already scopes
+        // its Select to the automation's own number, but a step's JSON
+        // is admin-editable Livewire state, so re-check server-side:
+        // without this, a step referencing another number's (and
+        // therefore possibly another branch's) template_id would
+        // silently send that branch's message content.
+        if ($template->wa_phone_number_id !== $automation->wa_phone_number_id) {
+            return ['action' => 'fail', 'error' => 'Template does not belong to this automation\'s phone number.'];
         }
 
         $conversation = WhatsappConversation::query()->firstOrCreate(
@@ -136,18 +154,23 @@ class AutomationStepExecutor
     {
         $url = (string) ($step['url'] ?? '');
 
-        if ($url === '' || ! str_starts_with($url, 'http')) {
-            return ['action' => 'fail', 'error' => 'webhook step has no valid url.'];
+        if ($url === '' || ! $this->urlSafetyChecker->isSafe($url)) {
+            return ['action' => 'fail', 'error' => 'webhook step has no valid, publicly-routable url.'];
         }
 
         try {
-            $response = Http::timeout(10)->send(strtoupper((string) ($step['method'] ?? 'POST')), $url, [
-                'json' => [
-                    'contact_id' => $contact->id,
-                    'phone' => $contact->phone,
-                    'name' => $contact->name,
-                ],
-            ]);
+            // allow_redirects disabled: the safety check above only
+            // validates $url itself — without this, a step could point
+            // at an external URL that passes the check and then 3xx's
+            // to an internal address, bypassing it entirely.
+            $response = Http::timeout(10)->withOptions(['allow_redirects' => false])
+                ->send(strtoupper((string) ($step['method'] ?? 'POST')), $url, [
+                    'json' => [
+                        'contact_id' => $contact->id,
+                        'phone' => $contact->phone,
+                        'name' => $contact->name,
+                    ],
+                ]);
 
             if ($response->failed()) {
                 Log::warning('WhatsApp automation webhook step returned an error status', [

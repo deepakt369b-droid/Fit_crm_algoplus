@@ -11,7 +11,10 @@ use Illuminate\Database\Eloquent\Model;
  *
  * @property int $id
  * @property int|null $gym_id
- * @property string|null $anthropic_api_key
+ * @property string $provider
+ * @property string|null $api_key
+ * @property string|null $base_url
+ * @property string|null $anthropic_api_key deprecated - superseded by $api_key/$provider; column kept (unused by application code) rather than dropped, since dropping a column is a destructive migration
  * @property string $model
  * @property string|null $system_prompt
  */
@@ -27,7 +30,9 @@ class WhatsappAiSetting extends Model
      */
     protected $fillable = [
         'gym_id',
-        'anthropic_api_key',
+        'provider',
+        'api_key',
+        'base_url',
         'model',
         'system_prompt',
     ];
@@ -35,7 +40,7 @@ class WhatsappAiSetting extends Model
     protected function casts(): array
     {
         return [
-            'anthropic_api_key' => 'encrypted',
+            'api_key' => 'encrypted',
         ];
     }
 }

@@ -6,19 +6,39 @@ services:
       CONTAINER_ROLE: web
     env_file:
       - .env
-    ports:
-      - "80:80"
+    # Deliberately NOT "ports: - 80:80" — publishing a host port
+    # directly bypasses Coolify's Traefik proxy (which itself owns
+    # host 80/443) instead of routing through it, and per Coolify's own
+    # docs this silently breaks domain-based routing, SSL certificate
+    # provisioning, AND rolling/zero-downtime deploys. `expose` makes
+    # the port reachable to other containers on the same Docker
+    # network (Coolify attaches its proxy and this container to the
+    # same `coolify` network) without binding anything on the host.
+    # For local testing outside Coolify, add a
+    # docker-compose.override.yml with `ports: ["80:80"]` on this
+    # service rather than editing this file.
+    expose:
+      - "80"
     volumes:
       - storage:/var/www/html/storage
     depends_on:
-      - mysql
-      - redis
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     healthcheck:
+      # start_period covers scripts/coolify-deploy.sh running INSIDE
+      # this container before nginx/php-fpm even start listening
+      # (entrypoint.sh runs it synchronously first) — migrate --force
+      # + all four cache commands on a first deploy can easily exceed
+      # the 20s this used to allow, especially on a slower VPS/disk,
+      # which would flip this container to "unhealthy" before it ever
+      # had a chance to serve a request.
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1/healthz"]
-      interval: 30s
+      interval: 10s
       timeout: 5s
-      retries: 3
-      start_period: 20s
+      retries: 5
+      start_period: 60s
 
   queue:
     build: .
@@ -30,9 +50,17 @@ services:
     volumes:
       - storage:/var/www/html/storage
     depends_on:
-      - app
-      - mysql
-      - redis
+      # Waiting on app's own healthcheck (not just its process
+      # starting) rather than repeating mysql/redis's here is
+      # deliberate: app only reports healthy once coolify-deploy.sh has
+      # finished migrating inside it, so gating on app also means queue
+      # never starts processing jobs against a not-yet-migrated schema.
+      app:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   scheduler:
     build: .
@@ -44,9 +72,12 @@ services:
     volumes:
       - storage:/var/www/html/storage
     depends_on:
-      - app
-      - mysql
-      - redis
+      app:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   mysql:
     image: mysql:8.4
@@ -59,16 +90,32 @@ services:
     volumes:
       - mysql-data:/var/lib/mysql
     healthcheck:
+      # start_period is the fix for a real failure mode: with no
+      # start_period, a fresh volume's first-boot init (mysqld
+      # --initialize, creating the data directory, applying the root/
+      # app-user grants) can take longer than the old
+      # interval*retries (10s*5=50s) window on a modest VPS — once
+      # retries are exhausted mysql is marked "unhealthy", and since
+      # app/queue/scheduler all gate on `mysql: condition:
+      # service_healthy`, none of them would ever start. That's a hard
+      # deploy failure, not just a slow one.
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 60s
 
   redis:
     image: redis:7-alpine
     restart: unless-stopped
     volumes:
       - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
 volumes:
   storage:

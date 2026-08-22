@@ -88,6 +88,7 @@ it('saves the AI assistant API key to WhatsappAiSetting, not the JSON settings b
     Livewire::test(Settings::class)
         ->set('data', array_merge(baseSettingsFixture(), [
             'marketing' => [
+                'ai_provider' => 'anthropic',
                 'ai_api_key' => 'sk-ant-brand-new-key',
                 'ai_model' => 'claude-sonnet-5',
                 'ai_system_prompt' => 'Always mention our summer promo.',
@@ -97,7 +98,8 @@ it('saves the AI assistant API key to WhatsappAiSetting, not the JSON settings b
 
     $setting = WhatsappAiSetting::query()->sole();
 
-    expect($setting->anthropic_api_key)->toBe('sk-ant-brand-new-key')
+    expect($setting->provider)->toBe('anthropic')
+        ->and($setting->api_key)->toBe('sk-ant-brand-new-key')
         ->and($setting->model)->toBe('claude-sonnet-5')
         ->and($setting->system_prompt)->toBe('Always mention our summer promo.');
 
@@ -107,7 +109,7 @@ it('saves the AI assistant API key to WhatsappAiSetting, not the JSON settings b
 
 it('keeps the current AI API key when the field is submitted blank', function (): void {
     WhatsappAiSetting::factory()->create([
-        'anthropic_api_key' => 'sk-ant-existing-key',
+        'api_key' => 'sk-ant-existing-key',
         'model' => 'claude-opus-5',
     ]);
 
@@ -122,6 +124,26 @@ it('keeps the current AI API key when the field is submitted blank', function ()
 
     $setting = WhatsappAiSetting::query()->sole();
 
-    expect($setting->anthropic_api_key)->toBe('sk-ant-existing-key')
+    expect($setting->api_key)->toBe('sk-ant-existing-key')
         ->and($setting->model)->toBe('claude-haiku-4-5');
+});
+
+it('saves a non-Anthropic provider, model, and base URL override', function (): void {
+    Livewire::test(Settings::class)
+        ->set('data', array_merge(baseSettingsFixture(), [
+            'marketing' => [
+                'ai_provider' => 'glm',
+                'ai_api_key' => 'sk-glm-test-key',
+                'ai_model' => 'glm-4.6',
+                'ai_base_url' => 'https://api.z.ai/api/paas/v4',
+            ],
+        ]))
+        ->call('save');
+
+    $setting = WhatsappAiSetting::query()->sole();
+
+    expect($setting->provider)->toBe('glm')
+        ->and($setting->api_key)->toBe('sk-glm-test-key')
+        ->and($setting->model)->toBe('glm-4.6')
+        ->and($setting->base_url)->toBe('https://api.z.ai/api/paas/v4');
 });

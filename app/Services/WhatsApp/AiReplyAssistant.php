@@ -2,7 +2,7 @@
 
 namespace App\Services\WhatsApp;
 
-use App\Contracts\AnthropicMessagesClient;
+use App\Contracts\AiChatClientFactory;
 use App\Helpers\Helpers;
 use App\Models\WhatsappAiSetting;
 use App\Models\WhatsappConversation;
@@ -19,6 +19,8 @@ use RuntimeException;
  */
 class AiReplyAssistant
 {
+    public const DEFAULT_PROVIDER = 'anthropic';
+
     public const DEFAULT_MODEL = 'claude-opus-5';
 
     private const MAX_HISTORY_MESSAGES = 20;
@@ -27,13 +29,13 @@ class AiReplyAssistant
 
     private const MAX_KNOWLEDGE_BASE_ARTICLES = 20;
 
-    public function __construct(private readonly AnthropicMessagesClient $client) {}
+    public function __construct(private readonly AiChatClientFactory $clientFactory) {}
 
     public function suggestReply(WhatsappConversation $conversation): string
     {
         $settings = WhatsappAiSetting::query()->first();
 
-        if ($settings === null || blank($settings->anthropic_api_key)) {
+        if ($settings === null || blank($settings->api_key)) {
             throw new RuntimeException(__('app.whatsapp.ai_not_configured'));
         }
 
@@ -43,13 +45,23 @@ class AiReplyAssistant
             throw new RuntimeException(__('app.whatsapp.ai_needs_inbound_message'));
         }
 
-        return $this->client->complete(
-            apiKey: (string) $settings->anthropic_api_key,
-            model: filled($settings->model) ? $settings->model : self::DEFAULT_MODEL,
+        $provider = filled($settings->provider) ? $settings->provider : self::DEFAULT_PROVIDER;
+        $client = $this->clientFactory->make($provider, $settings->base_url);
+
+        return $client->complete(
+            apiKey: (string) $settings->api_key,
+            model: filled($settings->model) ? $settings->model : $this->defaultModelFor($provider),
             system: $this->buildSystemPrompt($settings),
             messages: $messages,
             maxTokens: self::MAX_TOKENS,
         );
+    }
+
+    private function defaultModelFor(string $provider): string
+    {
+        $configured = config("services.ai_providers.{$provider}.default_model");
+
+        return is_string($configured) && $configured !== '' ? $configured : self::DEFAULT_MODEL;
     }
 
     /**

@@ -249,8 +249,10 @@ Before the first deploy:
 
 -   `storage/` must be a persistent volume — branch settings, gym logos, member/user photos, and generated invoice PDFs all live there, and a redeploy replaces the rest of the container filesystem.
 -   Set `TRUSTED_PROXIES=*` (already the `.env.example` default) — required for correct HTTPS URL generation and secure-cookie behavior behind Coolify's Traefik reverse proxy.
--   `GET /healthz` is a shallow health check (no DB round-trip) for Coolify's zero-downtime monitor; `GET /up` is Laravel's own deeper check.
+-   `GET /healthz` is a shallow health check (no DB round-trip) for Coolify's zero-downtime monitor; `GET /up` is Laravel's own deeper check. Coolify's Traefik will not route to a container it considers `unhealthy`, so `app`'s Docker healthcheck (`docker-compose.yaml`) is tuned with a 60s `start_period` — `scripts/coolify-deploy.sh` (migrate + four cache commands) runs to completion *before* `/healthz` can respond at all, and 60s comfortably covers a first deploy on a modest VPS. `mysql`'s healthcheck carries the same 60s `start_period` for the same reason: a fresh volume's first-boot initialization can otherwise exceed the old check window and get marked unhealthy before `app`/`queue`/`scheduler` (which all gate on `mysql: condition: service_healthy`) ever start.
+-   `app` intentionally uses `expose: "80"`, not `ports: "80:80"` — publishing a host port directly bypasses Coolify's Traefik (which itself owns host 80/443), silently breaking domain routing, SSL provisioning, and rolling deploys. For local testing outside Coolify, add your own `docker-compose.override.yml` with the host port mapping rather than editing `docker-compose.yaml`.
 -   If you plan to use the WhatsApp marketing module, set `WHATSAPP_APP_SECRET` and `WHATSAPP_VERIFY_TOKEN` before the first deploy — Meta requires a reachable, verified webhook URL before it will deliver anything.
+-   If your server is slow/low-spec, or the first build is taking a while (`npm ci` + `composer install` with no layer cache yet), check the server's own **Deployment timeout (seconds)** setting in Coolify (Servers → your server → General) rather than assuming the app itself is stuck — the default (3600s) is generous, but confirm it wasn't lowered.
 
 ## About Algo Plus
 
