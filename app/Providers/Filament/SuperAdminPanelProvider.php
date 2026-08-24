@@ -23,7 +23,7 @@ class SuperAdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
-        return app(AdminPanelProvider::class)->sharedPanelStyling($panel)
+        return (new AdminPanelProvider($this->app))->sharedPanelStyling($panel)
             ->id('superadmin')
             ->path('superadmin')
             ->resources([
