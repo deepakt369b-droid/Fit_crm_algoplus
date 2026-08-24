@@ -17,7 +17,7 @@ RUN apk add --no-cache \
         nodejs npm git unzip $PHPIZE_DEPS \
         libpng-dev libjpeg-turbo-dev freetype-dev libzip-dev icu-dev oniguruma-dev sqlite-dev linux-headers \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j1 gd intl zip bcmath pdo_mysql pdo_sqlite sqlite3 opcache mbstring \
+    && docker-php-ext-install -j1 gd intl zip bcmath pdo_mysql pdo_sqlite opcache mbstring \
     && pecl install redis \
     && docker-php-ext-enable redis
 
@@ -57,7 +57,7 @@ RUN apk add --no-cache \
     && apk add --no-cache --virtual .build-deps \
         libpng-dev libjpeg-turbo-dev freetype-dev libzip-dev icu-dev oniguruma-dev sqlite-dev linux-headers $PHPIZE_DEPS \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j1 gd intl zip bcmath pdo_mysql pdo_sqlite sqlite3 opcache mbstring \
+    && docker-php-ext-install -j1 gd intl zip bcmath pdo_mysql pdo_sqlite opcache mbstring \
     && pecl install redis \
     && docker-php-ext-enable redis \
     && apk del .build-deps
