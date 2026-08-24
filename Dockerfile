@@ -15,9 +15,9 @@ FROM php:8.2-fpm-alpine AS build
 # usage past what a small deploy VPS has available.
 RUN apk add --no-cache \
         nodejs npm git unzip $PHPIZE_DEPS \
-        libpng-dev libjpeg-turbo-dev freetype-dev libzip-dev icu-dev oniguruma-dev linux-headers \
+        libpng-dev libjpeg-turbo-dev freetype-dev libzip-dev icu-dev oniguruma-dev sqlite-dev linux-headers \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j1 gd intl zip bcmath pdo_mysql opcache mbstring \
+    && docker-php-ext-install -j1 gd intl zip bcmath pdo_mysql pdo_sqlite sqlite3 opcache mbstring \
     && pecl install redis \
     && docker-php-ext-enable redis
 
@@ -53,11 +53,11 @@ FROM php:8.2-fpm-alpine AS runtime
 # bloat the final image.
 RUN apk add --no-cache \
         nginx supervisor \
-        libpng libjpeg-turbo freetype libzip icu-libs oniguruma \
+        libpng libjpeg-turbo freetype libzip icu-libs oniguruma sqlite-libs \
     && apk add --no-cache --virtual .build-deps \
-        libpng-dev libjpeg-turbo-dev freetype-dev libzip-dev icu-dev oniguruma-dev linux-headers $PHPIZE_DEPS \
+        libpng-dev libjpeg-turbo-dev freetype-dev libzip-dev icu-dev oniguruma-dev sqlite-dev linux-headers $PHPIZE_DEPS \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j1 gd intl zip bcmath pdo_mysql opcache mbstring \
+    && docker-php-ext-install -j1 gd intl zip bcmath pdo_mysql pdo_sqlite sqlite3 opcache mbstring \
     && pecl install redis \
     && docker-php-ext-enable redis \
     && apk del .build-deps
@@ -73,6 +73,7 @@ COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh /var/www/html/scripts/coolify-deploy.sh
 
 RUN mkdir -p storage/framework/{cache,sessions,testing,views} storage/app/public storage/logs bootstrap/cache \
+    && touch database/database.sqlite \
     && chown -R www-data:www-data storage bootstrap/cache
 
 EXPOSE 80
