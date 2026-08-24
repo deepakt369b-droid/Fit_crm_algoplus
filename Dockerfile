@@ -26,7 +26,7 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 WORKDIR /app
 
 COPY composer.json composer.lock ./
-RUN composer update --lock --no-install --no-scripts
+RUN composer update --no-dev --no-install --no-scripts --prefer-dist
 RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
 
 # Cached independently of application source: npm ci (network-bound,
