@@ -7,6 +7,9 @@ set -e
 
 php artisan storage:link || true
 php artisan migrate --force
+if [ "${APP_ENV:-production}" = "testing" ]; then
+	php artisan db:seed --class=UserSeeder --force
+fi
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
