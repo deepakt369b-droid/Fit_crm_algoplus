@@ -17,7 +17,7 @@ class ListWhatsappBroadcasts extends ListRecords
     {
         // TEMPORARY diagnostic — remove after the Forbidden investigation.
         $user = auth()->user();
-        Log::warning('WBC-debug', [
+        error_log('WBC-debug ' . json_encode([
             'user' => $user?->email,
             'roles' => $user?->getRoleNames()?->toArray(),
             'resource_canAccess' => WhatsappBroadcastResource::canAccess(),
@@ -25,7 +25,7 @@ class ListWhatsappBroadcasts extends ListRecords
             'policy_class' => Gate::getPolicyFor(WhatsappBroadcast::class)::class ?? 'none',
             'gate_before_probe' => Gate::forUser($user)->check('wbc-debug-probe'),
             'direct_ability' => $user?->can('ViewAny:WhatsappBroadcast'),
-        ]);
+        ]));
 
         return parent::canAccess($parameters);
     }
