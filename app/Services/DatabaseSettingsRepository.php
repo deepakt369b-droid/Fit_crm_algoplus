@@ -21,9 +21,15 @@ class DatabaseSettingsRepository implements SettingsRepository
     private const EXAMPLE_SETTINGS_PATH = 'data/settingsData.json.example';
 
     /**
-     * @var array<string, mixed>|null
+     * Per-branch cache, keyed by TenantContext::gymId(). The key matters:
+     * SetAppLocale (the first middleware) calls get() BEFORE auth/tenant
+     * resolution, so a singleton cache keyed on nothing would freeze every
+     * later consumer on the contextless (example/fallback) settings for the
+     * whole request — per-branch feature flags would then be unreadable.
+     *
+     * @var array<int|string, array<string, mixed>>
      */
-    private ?array $cachedSettings = null;
+    private array $cachedSettings = [];
 
     /**
      * @var array<string, mixed>|null
@@ -38,17 +44,19 @@ class DatabaseSettingsRepository implements SettingsRepository
     public function setTestOverride(?array $override): void
     {
         static::$testOverride = $override;
-        $this->cachedSettings = null;
+        $this->cachedSettings = [];
     }
 
     public function get(): array
     {
-        if ($this->cachedSettings !== null) {
-            return $this->cachedSettings;
+        $key = $this->tenantContext->gymId() ?? 'none';
+
+        if (array_key_exists($key, $this->cachedSettings)) {
+            return $this->cachedSettings[$key];
         }
 
         if (static::$testOverride !== null) {
-            return $this->cachedSettings = $this->normalize(static::$testOverride);
+            return $this->cachedSettings[$key] = $this->normalize(static::$testOverride);
         }
 
         if (app()->runningUnitTests()) {
@@ -63,17 +71,17 @@ class DatabaseSettingsRepository implements SettingsRepository
                 $settings = json_decode((string) $row->data, true);
                 $settings = is_array($settings) ? $settings : [];
 
-                return $this->cachedSettings = $this->normalize($settings);
+                return $this->cachedSettings[$key] = $this->normalize($settings);
             }
 
-            return $this->cachedSettings = $this->normalize($this->exampleSettings());
+            return $this->cachedSettings[$key] = $this->normalize($this->exampleSettings());
         }
 
         $data = $this->row()?->data;
         $settings = $data ? json_decode((string) $data, true) : [];
         $settings = is_array($settings) ? $settings : [];
 
-        return $this->cachedSettings = $this->normalize($settings);
+        return $this->cachedSettings[$key] = $this->normalize($settings);
     }
 
     public function put(array $settings): void
@@ -85,7 +93,7 @@ class DatabaseSettingsRepository implements SettingsRepository
         // override only for true unit tests with no branch behind them.
         if (app()->runningUnitTests() && $this->tenantContext->gymId() === null) {
             static::$testOverride = $normalized;
-            $this->cachedSettings = $normalized;
+            $this->cachedSettings = [];
 
             return;
         }
@@ -95,7 +103,7 @@ class DatabaseSettingsRepository implements SettingsRepository
             ['data' => json_encode($normalized), 'updated_at' => now(), 'created_at' => now()],
         );
 
-        $this->cachedSettings = $normalized;
+        $this->cachedSettings[$this->tenantContext->gymId() ?? 'none'] = $normalized;
     }
 
     private function row(): ?object
