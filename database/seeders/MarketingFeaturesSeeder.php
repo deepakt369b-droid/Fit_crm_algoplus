@@ -7,12 +7,13 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Ensures every existing branch has a gym_settings row with the WhatsApp
- * marketing modules enabled, so freshly deployed branches can reach the
- * Broadcasts/Automations/Knowledge Base screens (each resource's canAccess
- * gates on these per-branch flags). Idempotent: existing rows keep whatever
- * the branch has already saved — only a missing row is created with the
- * flags on. Branch admins can still toggle everything in Settings.
+ * Ensures every branch can reach the WhatsApp marketing screens (each
+ * resource's canAccess gates on these per-branch flags).
+ *
+ * Testing deploys: flags are forced ON for every branch on every deploy, so
+ * QA always sees the full surface regardless of what a previous session
+ * saved. Production deploys: only a MISSING row is created (with the flags
+ * on) — existing rows keep whatever the branch saved.
  */
 class MarketingFeaturesSeeder extends Seeder
 {
@@ -20,26 +21,46 @@ class MarketingFeaturesSeeder extends Seeder
 
     public function run(): void
     {
+        $testingFlags = json_encode([
+            'marketing' => [
+                'inbox' => true,
+                'broadcasts' => true,
+                'automations' => true,
+                'knowledge_base' => true,
+            ],
+        ]);
+
+        $force = app()->environment('testing');
+
         $gymIds = DB::table('gyms')->pluck('id');
 
         foreach ($gymIds as $gymId) {
-            $exists = DB::table('gym_settings')->where('gym_id', $gymId)->exists();
+            $row = DB::table('gym_settings')->where('gym_id', $gymId)->first();
 
-            if ($exists) {
+            if ($row === null) {
+                DB::table('gym_settings')->insert([
+                    'gym_id' => $gymId,
+                    'data' => $testingFlags,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
                 continue;
             }
 
-            DB::table('gym_settings')->insert([
-                'gym_id' => $gymId,
-                'data' => json_encode([
-                    'marketing' => [
-                        'inbox' => true,
-                        'broadcasts' => true,
-                        'automations' => true,
-                        'knowledge_base' => true,
-                    ],
-                ]),
-                'created_at' => now(),
+            if (! $force) {
+                continue;
+            }
+
+            $data = json_decode((string) $row->data, true);
+            $data = is_array($data) ? $data : [];
+            $data['marketing'] = array_merge(
+                is_array($data['marketing'] ?? null) ? $data['marketing'] : [],
+                ['inbox' => true, 'broadcasts' => true, 'automations' => true, 'knowledge_base' => true],
+            );
+
+            DB::table('gym_settings')->where('gym_id', $gymId)->update([
+                'data' => json_encode($data),
                 'updated_at' => now(),
             ]);
         }
