@@ -145,7 +145,9 @@ class SubscriptionTable
                 Action::make('create_plan')
                     ->icon('heroicon-o-plus')
                     ->label(__('app.actions.new', ['resource' => __('app.resources.plans.singular')]))
-                    ->url(fn () => PlanResource::getUrl('create'))
+                    // PlanResource registers no 'create' page — plans are
+                    // created via the CreateAction modal on the index page.
+                    ->url(fn () => PlanResource::getUrl('index'))
                     ->hidden(fn () => Plan::exists()),
             ])
             ->filters([
