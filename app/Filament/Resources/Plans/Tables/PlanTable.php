@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Plans\Tables;
 
+use App\Filament\Resources\Services\ServiceResource;
 use App\Helpers\Helpers;
 use App\Models\Plan;
 use App\Models\Service;
@@ -124,7 +125,7 @@ class PlanTable
             ->emptyStateActions([
                 Action::make('manage_service')
                     ->label(__('app.actions.manage_services'))
-                    ->url(fn () => route('filament.admin.resources.services.index'))
+                    ->url(fn () => ServiceResource::getUrl('index'))
                     ->icon('heroicon-o-arrow-right')
                     ->iconPosition('after')
                     ->hidden(fn () => Service::exists()),

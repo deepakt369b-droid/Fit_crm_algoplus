@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\FollowUps\Tables;
 
+use App\Filament\Resources\Enquiries\EnquiryResource;
 use App\Filament\Resources\FollowUps\FollowUpResource;
 use App\Models\Enquiry;
 use App\Models\FollowUp;
@@ -150,7 +151,7 @@ class FollowUpTable
             ->emptyStateActions([
                 Action::make('create_enquiry')
                     ->label(__('app.actions.new', ['resource' => __('app.resources.enquiries.singular')]))
-                    ->url(fn () => route('filament.admin.resources.enquiries.create'))
+                    ->url(fn () => EnquiryResource::getUrl('create'))
                     ->icon('heroicon-o-plus')
                     ->hidden(fn () => Enquiry::exists()),
                 CreateAction::make()

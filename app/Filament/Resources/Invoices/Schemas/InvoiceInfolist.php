@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Invoices\Schemas;
 
+use App\Filament\Resources\Subscriptions\SubscriptionResource;
 use App\Helpers\Helpers;
 use App\Models\Invoice;
 use App\Support\Billing\PaymentMethod;
@@ -53,7 +54,7 @@ class InvoiceInfolist
                                     ->weight(FontWeight::Bold)
                                     ->color('success')
                                     ->formatStateUsing(fn ($record): string => "{$record->subscription->member->code} – {$record->subscription->member->name}")
-                                    ->url(fn ($record): string => route('filament.admin.resources.subscriptions.view', $record->subscription_id)),
+                                    ->url(fn ($record): string => SubscriptionResource::getUrl('view', ['record' => $record->subscription_id])),
                                 TextEntry::make('date')->label(__('app.fields.date'))->date(),
                                 TextEntry::make('due_date')
                                     ->label(__('app.fields.due_date'))

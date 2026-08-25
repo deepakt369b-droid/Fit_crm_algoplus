@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\FollowUps\Schemas;
 
+use App\Filament\Resources\Enquiries\EnquiryResource;
+use App\Filament\Resources\Users\UserResource;
 use App\Models\FollowUp;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Fieldset;
@@ -45,7 +47,7 @@ class FollowUpInfolist
                             ->label(__('app.resources.enquiries.singular'))
                             ->weight(FontWeight::Bold)
                             ->color('success')
-                            ->url(fn ($record): string => route('filament.admin.resources.enquiries.view', $record->enquiry_id)),
+                            ->url(fn ($record): string => EnquiryResource::getUrl('view', ['record' => $record->enquiry_id])),
                         TextEntry::make('user.name')
                             ->label(__('app.fields.handled_by'))
                             ->weight(FontWeight::Bold)
@@ -53,7 +55,7 @@ class FollowUpInfolist
                             ->placeholder(__('app.placeholders.na'))
                             ->url(
                                 fn ($record) => $record->user_id
-                                    ? route('filament.admin.resources.users.view', $record->user_id)
+                                    ? UserResource::getUrl('view', ['record' => $record->user_id])
                                     : null
                             ),
                         TextEntry::make('method')

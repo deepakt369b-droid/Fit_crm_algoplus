@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Invoices\Tables;
 
 use App\Filament\Resources\Invoices\InvoiceResource;
+use App\Filament\Resources\Subscriptions\SubscriptionResource;
 use App\Helpers\Helpers;
 use App\Models\Invoice;
 use App\Models\InvoiceTransaction;
@@ -159,7 +160,7 @@ class InvoiceTable
             ->emptyStateActions([
                 Action::make('create_subscription')
                     ->label(__('app.actions.new', ['resource' => __('app.resources.subscriptions.singular')]))
-                    ->url(fn () => route('filament.admin.resources.subscriptions.create'))
+                    ->url(fn () => SubscriptionResource::getUrl('create'))
                     ->icon('heroicon-o-plus')
                     ->hidden(fn () => Subscription::exists()),
             ])

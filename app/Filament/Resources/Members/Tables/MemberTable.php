@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Members\Tables;
 
+use App\Filament\Resources\Members\MemberResource;
 use App\Models\Member;
 use Carbon\Carbon;
 use Filament\Actions\Action;
@@ -194,7 +195,7 @@ class MemberTable
                         DeleteAction::make()->hiddenLabel(),
                     ])->dropdown(false),
                 ]),
-            ])->recordUrl(fn ($record): string => route('filament.admin.resources.members.view', $record->id))
+            ])->recordUrl(fn ($record): string => MemberResource::getUrl('view', ['record' => $record->id]))
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),

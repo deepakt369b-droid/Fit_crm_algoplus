@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Subscriptions\Tables;
 
+use App\Filament\Resources\Members\MemberResource;
+use App\Filament\Resources\Plans\PlanResource;
 use App\Filament\Resources\Subscriptions\Schemas\SubscriptionForm;
 use App\Filament\Resources\Subscriptions\SubscriptionResource;
 use App\Models\Member;
@@ -138,12 +140,12 @@ class SubscriptionTable
                 Action::make('create_member')
                     ->icon('heroicon-o-plus')
                     ->label(__('app.actions.new', ['resource' => __('app.resources.members.singular')]))
-                    ->url(fn () => route('filament.admin.resources.members.create'))
+                    ->url(fn () => MemberResource::getUrl('create'))
                     ->hidden(fn () => Member::exists()),
                 Action::make('create_plan')
                     ->icon('heroicon-o-plus')
                     ->label(__('app.actions.new', ['resource' => __('app.resources.plans.singular')]))
-                    ->url(fn () => route('filament.admin.resources.plans.create'))
+                    ->url(fn () => PlanResource::getUrl('create'))
                     ->hidden(fn () => Plan::exists()),
             ])
             ->filters([

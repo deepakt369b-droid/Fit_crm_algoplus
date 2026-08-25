@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Enquiries\Tables;
 
+use App\Filament\Resources\Enquiries\EnquiryResource;
 use App\Filament\Resources\Members\MemberResource;
 use App\Models\Enquiry;
 use Carbon\Carbon;
@@ -159,7 +160,7 @@ class EnquiryTable
                             ->hiddenLabel(),
                     ])->dropdown(false),
                 ]),
-            ])->recordUrl(fn ($record): string => route('filament.admin.resources.enquiries.view', $record->id))
+            ])->recordUrl(fn ($record): string => EnquiryResource::getUrl('view', ['record' => $record->id]))
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),

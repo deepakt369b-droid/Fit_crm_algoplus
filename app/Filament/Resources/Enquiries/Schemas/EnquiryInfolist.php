@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Enquiries\Schemas;
 
+use App\Filament\Resources\Users\UserResource;
 use App\Models\Enquiry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Grid;
@@ -54,7 +55,7 @@ class EnquiryInfolist
                             ->label(__('app.fields.lead_owner'))
                             ->weight(FontWeight::Bold)
                             ->color('success')
-                            ->url(fn ($record): string => route('filament.admin.resources.users.view', $record->user_id)),
+                            ->url(fn ($record): string => UserResource::getUrl('view', ['record' => $record->user_id])),
                         TextEntry::make('start_by')
                             ->label(__('app.fields.preferred_start_date'))
                             ->date()
