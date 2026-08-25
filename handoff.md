@@ -1,296 +1,173 @@
-# FitCRM Build
+# FitCRM — Handoff (updated 2026-08-25, end of session)
 
-## Deployment handoff - 2026-08-24
+Working directory: `C:\Users\DK\Downloads\FitCRM\Fit_crm_algoplus` (repo pushed to
+`https://github.com/deepakt369b-droid/Fit_crm_algoplus.git`, branch `master`).
 
-### Current state
+## Current state (live, verified)
 
-- Coolify application UUID: `eu4zxqgxdtqpnaa4kwkwqogo`.
-- Coolify uses the repository `Dockerfile`, exposing port `80`, with health
-  check `/healthz` on port `80`.
-- Commit `cc60618` built successfully and Coolify reported the application as
-  `running:healthy`.
-- Testing configuration was added directly in Coolify: SQLite database, file
-  sessions/cache, synchronous queue, log mailer, and `APP_ENV=testing`.
-- Local testing hostname: `http://fitcrm.127.0.0.1.nip.io`. It is not public
-  and requires the local Coolify Traefik proxy.
-- Testing startup runs `ShieldSeeder` followed by `UserSeeder`.
-- Intended test superadmin: `test@example.com` / `test`.
+- Coolify application UUID: `eu4zxqgxdtqpnaa4kwkwqogo` (project `lxkdwbzqznm6yi4w0pwuzf7h`).
+  Deployed commit: `f694b73` (or later), `running:healthy`, build pack Dockerfile.
+- **HTTPS is live**: `https://fitcrm.127.0.0.1.nip.io` (Traefik default self-signed
+  cert — browser shows a one-time "Privacy error"; click Advanced → Proceed).
+  HTTP redirects to HTTPS. `APP_URL` is `https://…` in Coolify env.
+- Camera capture on the member form **works over HTTPS** — user confirmed a
+  successful capture. A camera device picker (`enumerateDevices` dropdown) ships
+  for multi-camera machines; front camera is the default.
+- **20/20 admin pages verified rendering** for the super_admin role (browser
+  sweep via the OpenCode-Browser bridge).
+- Testing deployment runs with `APP_ENV=testing` → `ShieldSeeder`, `UserSeeder`,
+  `SuperAdminSeeder`, `MarketingFeaturesSeeder` run on every deploy. **Every
+  deploy wipes the database** (no persistent volume yet — see Loop 6).
 
-### Current blocker
+### Accounts (testing only — rotate/delete before production)
 
-The browser reaches the application, but the page reports:
-
-```text
-Fatal error: Allowed memory size of 536870912 bytes exhausted (tried to allocate 262144 bytes)
-```
-
-This is a 512 MB PHP memory exhaustion in Laravel container/bootstrap code,
-not a Docker image build failure. Do not increase memory first. Investigate
-recursive provider/container bootstrapping, especially the interaction between
-`SuperAdminPanelProvider` and `AdminPanelProvider`.
-
-### First tasks tomorrow
-
-1. Inspect container logs and identify the first request path causing the
-  fatal error.
-2. Check whether `SuperAdminPanelProvider::panel()` recursively constructs or
-  boots `AdminPanelProvider`.
-3. As a diagnostic only, remove `SuperAdminPanelProvider` from
-  `bootstrap/providers.php` and verify whether the normal admin panel loads.
-4. Test `php artisan about`, `php artisan route:list`, and `/healthz` inside
-  the container after each change.
-5. Keep `APP_DEBUG=false` after debugging and redeploy with a forced rebuild.
-6. Verify the test login, then remove or change the test account before
-  production.
-
-### Deployment history
-
-| Commit | Deployment | Result |
+| Account | Password | Purpose |
 |---|---|---|
-| `05153a3` | `xlm0fgyghc7fadknuhbbd7qh` | Composer install failure |
-| `6a38246` | `txza0raiyjf67o3qbi7hxttq` | Composer lock refresh failure |
-| `19923e9` | `rwpr7z65lhhldxw2wgaxebgk` | Provider constructor failure |
-| `1531cb4` | `ygcbvqfffna83cufc3jthqpb` | Container dependency failure |
-| `da57a76` | `ana4c5ck3g9kjz2sr9sg9ngm` | MySQL connection refused |
-| `4d23f6e` | `sa9kizhbaoko2qf8lqcooqft` | SQLite extension build failure |
-| `cc60618` | `rh1dtiv04kqqc3aowba6ypjo` | Image and health check successful |
-| `eccaa26` | `e01gglxmwnlg1xxdcsuxlaip` | Faker seed failure |
-| `df638bb` | `v0llpgtvtbplytqiobjiuwh8` | Missing `super_admin` role |
-| `d88e671` | `nv1erpeau62oi4aflt6ihvpy` | 512 MB memory exhaustion |
+| `test@example.com` | `test` | Legacy shared test login (super_admin) |
+| `superadmin@fitcrm.local` | `FitCRM-Super-2026!` | Dedicated operator login (super_admin) — verify `/superadmin` panel access manually |
 
-Revoke the Coolify API token used during this session before continuing.
-# FitCRM Build — Handoff
+### Access notes
 
-> **Update:** Node 4 M1 (below) is now complete and committed — tests,
-> `CREDITS.md`, and the verification sweep were finished after this doc
-> was first written. See `git log` for the actual commit. The rest of
-> this document is kept as-is for the historical record of decisions
-> made during the build; treat "uncommitted"/"pick up here" language
-> below as describing that point in time, not the current state.
->
-> **Second update:** Node 4 M2 (broadcasts) is also now complete and
-> committed — see `git log` for that commit's message, which documents
-> what M2 added (wa_broadcasts/wa_broadcast_recipients, chunked/paced
-> sending via SendWhatsappBroadcastBatch, the messaging-tier throttle,
-> per-recipient status propagation from WhatsappMessage, and the
-> Filament WhatsappBroadcastResource) in the same level of detail as
-> the M1 notes below.
->
-> **Third update:** Node 4 M3 (automations) is now complete and
-> committed as `8124977` — lang keys were finished for ar/fa/fr, the
-> bracket-balance and brand-string sweeps were re-run clean, and the
-> commit follows the same detail level as M1/M2 (see `git log` for the
-> full message). The "M3 status — pick up here" section below is kept
-> as-is for the historical record of what was in progress at the time;
-> treat "uncommitted"/"pick up here" language there as describing that
-> point in time, not the current state.
->
-> **Fourth update:** the user asked to proceed straight to M4 without a
-> pause at the M3 gate, so M4 (AI reply assistant + knowledge base) is
-> now also complete and committed as `5e70cff` — new `anthropic-ai/sdk`
-> dependency, `wa_ai_settings`/`wa_knowledge_base_articles` schema, the
-> `AiReplyAssistant` service behind an `AnthropicMessagesClient` seam
-> for testability, a `WhatsappKnowledgeBaseArticleResource`, an "AI
-> Suggest Reply" action on the conversation view, and a new AI Assistant
-> section in the superadmin Marketing settings tab. Two real bugs caught
-> before commit: `AiReplyAssistant` checked `direction === 'inbound'`
-> when the schema actually uses `'in'`/`'out'` (would have made every
-> suggestion request fail), and `Settings::mount()` discarded its own
-> AI-field additions by filling the form from the wrong variable. Full
-> detail in the commit message — see `git log`. **Node 4 (M1–M4) is now
-> functionally complete.** Awaiting a Human Gate review of M4 (and, if
-> the user wants it, a combined look back at the whole node) before
-> considering the WhatsApp merge done.
+- Coolify MCP endpoint: `http://localhost:8000/mcp` (Sanctum bearer token from
+  the CRM's Security → API Tokens — **the token used on 2026-08-25 was pasted
+  into chat; rotate it**). MCP sessions expire; re-run the `initialize`
+  handshake and use the new `MCP-Session-Id` when calls start returning null.
+- Browser automation: OpenCode-Browser extension (vymalo) → bridge daemon
+  `C:\Users\DK\AppData\Local\Temp\opencode\vymalo-bridge.mjs` (WS :3002 for the
+  extension, HTTP control on :4599 — `POST /tool/<name>` with JSON). Start with
+  `Start-Process node <script>`; logs land in `vymalo-out.log`.
+- The registered `browsermcp` entry in `~/.config/opencode/opencode.jsonc` is
+  the WRONG package (Mytai20100) — the working one is the `@vymalo/opencode-browser`
+  plugin family. Clean that entry up when browser_* tools are wanted natively.
 
-Working directory: `C:\Users\DK\Downloads\FitCRM\Fit_crm_algoplus` (git repo, not pushed anywhere).
-Plan file: `C:\Users\DK\.claude\plans\markdown-system-directive-rebrand-whimsical-hummingbird.md` — read this first for full context, decisions, and rationale.
+## Fixed on 2026-08-25 (all root causes, deployed)
 
-No PHP/Composer/Docker runtime is available in this environment. Nothing here has been executed — everything is reasoned through and cross-checked by static inspection (grep, bracket-balance sweeps, and targeted WebFetch verification of Filament/Laravel/Meta API internals). Whoever picks this up should run `composer install && php artisan test` (or push through CI) as the first real validation.
+| Commit | Fix |
+|---|---|
+| `05b6e9a` | 11 Filament actions generated `{tenant}`-scoped routes without the tenant parameter (the original "Missing parameter: tenant" crash) |
+| `f0e4eae` | Plans/Services register no `create` page — empty-state links target the index (modal-based creation) |
+| `9090030` | Shield roles page crashed on tenant scoping (roles are global → `RoleResource::scopeToTenant(false)`); missing `WhatsappBroadcast/Automation/KnowledgeBaseArticle` policies created; camera HTTPS messaging added |
+| `b7599ff` | **Deep one:** `SetAppLocale` (first middleware) read settings before auth/tenant resolution, poisoning the singleton settings cache with example defaults for the whole request → every per-branch feature flag unreadable → "Forbidden" pages. Cache is now keyed per branch context. |
+| `427f28e` | `DatabaseSettingsRepository` ignored the database entirely under `APP_ENV=testing` (reads AND writes) — now prefers the persisted `gym_settings` row |
+| `434bf7a`/`ecaf038` | `MarketingFeaturesSeeder` — fresh branches get marketing flags; testing deploys re-assert them ON |
+| `f694b73` | Privilege-escalation guard: branch operators can no longer grant the `super_admin` role from the user form |
+| `aeabe36` | Camera device picker, `SuperAdminSeeder`, placeholder API templates (`.env.example` + `COOLIFY_TESTING_ENV.md`) |
 
-## Committed so far (6 commits, clean working tree up to `15c77e5`)
+## Remaining work — loop plan
 
-| Commit | Node | Summary |
-|---|---|---|
-| `7c8f9dd` | −1 | Pristine Gymie v3 baseline |
-| `4ab4808` | 2A | Rebrand → FitCRM / Algo Plus |
-| `30692fc` | 3B | Multi-branch tenancy, superadmin panel, per-branch settings |
-| `3ed5068` | 3A | Biometric gate: Device tokenable, pairing, check-in/sync API |
-| `ea00472` | 3C | Mandatory camera-first photo, consent-gated fingerprint enrolment |
-| `15c77e5` | 2B | Dockerfile + Nixpacks, `/healthz`, production `.env.example` |
+### Loop 1 — HTTPS + camera: **DONE** (capture confirmed by user)
+Only leftover: the one-time certificate warning click per browser (self-signed
+Traefik cert has no SAN — Chrome will always warn). Permanent fix options when
+a real domain exists, or use `fitcrm.217.165.236.207.nip.io` if ports 80/443
+are forwarded to the server (LE-issuable → no warning).
 
-Real bugs found and fixed along the way (see individual commit messages for detail): cross-branch unique-constraint collisions (invoice numbers, plan codes, member codes), a missing `ext-mbstring` in the Docker image, `Device` model missing `Authenticatable`/`Authorizable` contracts, an unwired `consent_given_at` column, and — most recently — **two closure-based routes that would have hard-failed `php artisan route:cache`** in the deploy script (the pre-existing `/user` route and my own `/healthz` route). Both fixed by converting to controller classes.
+### Loop 2 — Superadmin account: **DONE** (needs one manual check)
+Log in as `superadmin@fitcrm.local` and confirm `/superadmin` loads Gyms +
+Users management. Then decide whether to keep or delete `test@example.com`.
 
-## In progress, UNCOMMITTED: Node 4 M1 (WhatsApp foundation)
+### Loop 3 — Placeholder APIs: **DONE** (user fills real values)
+Template table lives in `COOLIFY_TESTING_ENV.md`. Webhook callback URL for
+Meta: `https://<domain>/api/v1/webhooks/whatsapp`. Resend needs a verified
+sending domain + real `RESEND_KEY`. WhatsApp credentials go in **Phone
+Numbers → New**; AI keys in **Settings → Marketing**. Placeholder credentials
+fail gracefully (in-app notifications, no crashes).
 
-This is a large, uncommitted change set (~31 files) implementing the merge-in from `ArnasDon/wacrm` per the plan's Node 4 M1 scope: phone numbers, contacts, template sync, send/receive, shared inbox. **Do not treat this as done** — it needs the remaining steps below before it's commit-ready.
+### Loop 4 — Multi-branch operations: **~80% done, verification pending**
+- Machinery already existed: `Gym` tenancy, branch switcher in the sidebar,
+  `/superadmin` panel manages Gyms + Users, `UserForm` has a gym selector
+  (superadmin panel only; branch panels auto-fill `gym_id`).
+- Added: super_admin role-grant guard (above).
+- **PENDING (blocked on one browser click):** the Chrome certificate
+  interstitial re-appeared and the CDP keypress bypass (`thisisunsafe`) does
+  not register. User must click **Advanced → Proceed** once on
+  `https://fitcrm.127.0.0.1.nip.io`, then run this verification:
+  1. `/superadmin/gyms` → create "Branch B".
+  2. `/superadmin/users` → create/edit a user with `gym_id` = Branch B.
+  3. Log in as that user → sidebar switcher shows ONLY Branch B; data is
+     branch-scoped (spot-check members/subscriptions).
+  4. Confirm the role dropdown no longer offers `super_admin` to
+     non-super-admin editors.
 
-### What's built (uncommitted)
-- **Migrations**: `wa_phone_numbers`, `wa_contacts` (+`wa_tags`/`wa_contact_tag`), `wa_templates`, `wa_conversations`+`wa_messages` — all `2026_08_21_12000{0,1,2,3}_*`. All gym-scoped tables use **nullable** `gym_id` (a shared phone number's inbound contacts can't be auto-assigned a branch — see plan/models for the reasoning), matching the established pattern from Node 3B/3C.
-- **Models**: `WhatsappPhoneNumber`, `WhatsappContact`, `WhatsappTag`, `WhatsappTemplate`, `WhatsappConversation`, `WhatsappMessage` — all under `App\Models\`, using `BelongsToGym`.
-- **Services** (`app/Services/WhatsApp/`):
-  - `MetaCloudApiClient` — send text/template, fetch templates. Meta Graph API shapes verified via live doc fetch (not guessed) — see plan for the exact payload examples pulled from developers.facebook.com.
-  - `WebhookSignatureVerifier` — `X-Hub-Signature-256` HMAC check.
-  - `InboundWebhookProcessor` — turns a verified webhook payload into contact/conversation/message rows; **honors "STOP" as an automatic opt-out**.
-  - `OutboundMessageSender` — enforces the 24-hour customer service window (free text only within it, template required outside), and now correctly marks a message `failed` (with Meta's error) if the API call throws, instead of leaving it stuck at `queued`.
-  - `TemplateSyncer` — pulls a phone number's WABA-approved templates into `wa_templates`.
-- **Webhook endpoint**: `GET|POST /api/webhooks/whatsapp` via `WhatsappWebhookController` (two explicit routes, not `Route::match` with a closure — see below). POST processing is queued (`ProcessWhatsappWebhook` job), not synchronous, so Meta gets a fast 200.
-- **Feature flags**: `NormalizesSettings` gained a `marketing` section (`inbox` on by default, `broadcasts`/`automations`/`pipelines`/`ai_assistant`/`knowledge_base` off — those are M2–M4, not built). `Helpers::marketingFeatureEnabled()` checks it; every new Resource's `canAccess()` gates on it. A **superadmin-only** "Marketing" tab was added to the existing `Settings` page (`app/Filament/Pages/Settings.php`) with toggles for all six — gated on `auth()->user()->hasRole('super_admin')`.
-- **Filament UI**: `WhatsappPhoneNumberResource` (CRUD + "Sync templates" action), `WhatsappContactResource` (CRUD, opt-in status, optional Member link), `WhatsappTemplateResource` (read-only), `WhatsappConversationResource` (the shared inbox — list + a custom `ViewWhatsappConversation` page with a message-thread partial and a "Reply" action that branches between free-text and template-select based on the 24h window). All registered under a new "Marketing" nav group in `AdminPanelProvider`.
-- **Two real bugs already caught and fixed in this uncommitted work** (both are the kind that would only surface at runtime, so flagging prominently):
-  1. `wa_templates.status` was initially a DB `ENUM` — changed to a plain `string`, because Meta's template status vocabulary (approved/pending/rejected/paused/disabled/in_appeal/pending_deletion/...) is external and larger than what I could safely enumerate; a value outside the enum would have hard-failed the *entire* sync batch on one bad row.
-  2. Two closure-based HTTP routes (`routes/api.php`'s pre-existing `/user`, and my own `routes/web.php` `/healthz` from Node 2B) — both silently break `php artisan route:cache`, which `scripts/coolify-deploy.sh` runs on every deploy. Converted both to controller classes (`HealthCheckController`, and `/user` now points at the existing `AuthController::me`).
-- Lang keys added in full across all four locales (en/ar/fa/fr) — bracket-balance-verified after every edit.
+### Loop 5 — Gated entry (biometrics + subscription enforcement): **NOT STARTED**
+1. Explicit `allowed/deny + reason` contract in the attendance check-in
+   response (currently returns member status only — deny logic for
+   expired/cancelled subscriptions, branch mismatch, revoked device is not
+   enforced server-side). Files:
+   `app/Http/Controllers/Api/V1/AttendanceController.php`, `DevicesController.php`.
+2. Mobile kiosk capture page (phone front camera at the gate — HTTPS now
+   available; `CameraCapture` pattern is the reference).
+3. Fingerprint: browsers cannot read sensors — requires native hardware
+   path (Android kiosk app or ZKTeco-class SDK). **User must choose the
+   hardware family before this half is planned.** Existing schema already
+   supports it: `member_device_identifiers.biometric_type` +
+   `finger_position`, templates stay on-device by design.
+4. Run a `security-audit` pass over pairing/enrol/check-in (token scope,
+   replay, rate limits) before calling it production-ready.
 
-### What's NOT done yet for M1 (pick up here)
-1. **Tests** — none written yet for Node 4. Plan commits to: webhook signature verification (valid/invalid), inbound message → contact/conversation/message creation, STOP → opt-out, 24h-window enforcement blocking free-text send outside the window, template-required-outside-window path, `wa_templates.status` accepting an unrecognized value without erroring.
-2. **`CREDITS.md`** — plan commits to crediting `ArnasDon/wacrm` (MIT) even though this is a reimplementation, not a copy. Not created yet.
-3. **Final verification sweep** — re-run the brace/paren balance check and the `gymie|lubus` grep sweep across the full diff before committing (both were clean as of the last check, before tests/CREDITS were added — re-check after).
-4. **Commit** — once 1–3 are done, commit as "Node 4 M1: WhatsApp foundation" following the same style as the prior five commits (see `git log` for tone/structure — lead with what changed, then a paragraph on real bugs found/fixed, matching the honesty bar set so far).
-5. **Human Gate** — per the plan, Node 4 gets its own gate *per milestone* (M1–M4), not one gate at the end. Present the M1 change table to the user before moving to M2.
+### Loop 6 — Production closeout: **NOT STARTED**
+1. Persistent volumes in Coolify for `/var/www/html/database` (SQLite) and
+   `/var/www/html/storage` (uploads/sessions) — currently every deploy wipes
+   data. The entrypoint already fixes volume ownership on boot.
+2. Backups for the SQLite file.
+3. Queue worker + scheduler containers (`docker-compose.yaml` has them; the
+   single-container Dockerfile deploy currently runs neither — WhatsApp
+   automations/broadcast pacing depend on the queue).
+4. Real domain + real certificate (kills the interstitial), real Resend key,
+   real Meta credentials.
+5. Delete/rotate seeded test accounts and the leaked API token.
+6. Final `security-audit` + `database-optimizer` pass.
 
-### Known gaps / deliberately deferred (say so if asked, don't silently fix without checking)
-- **No auto-linking of inbound WhatsApp contacts to existing Members/Enquiries by phone number** — considered and deliberately skipped for M1 (phone-format normalization across E.164/local formats was judged too fragile to do blind, without a runtime to test against). Contacts are created standalone; staff can link them to a Member manually via the Filament form. Flagged in code comments.
-- **Shared phone numbers** (`is_shared = true`, `gym_id = null`) have no routing logic to guess which branch an inbound message belongs to — by design, they land unscoped (`gym_id = null`) until a staff member manually assigns a branch. This is the "build for both" number-model decision from the plan; the dedicated-number path is fully scoped, the shared-number path is intentionally minimal.
-- **M2 (broadcasts), M3 (automations), M4 (AI assistant + knowledge base)** are not started — their feature flags exist (all default `false`) but no schema/UI/logic behind them.
+## Gotchas (read before debugging anything)
 
-## M3 status — pick up here (in progress, uncommitted)
+- **`APP_ENV=testing` is load-bearing**: it makes the deploy script run
+  seeders and (since `427f28e`) the settings repository prefers the DB row.
+  Before `427f28e`, testing env froze all settings to the bundled example
+  blob — if feature flags mysteriously read false, check this first.
+- **Settings cache is keyed by branch** (`b7599ff`): `SetAppLocale` (first
+  middleware) reads settings pre-auth; a contextless read caches under
+  `none` and must never leak into tenant reads.
+- **Every deploy wipes the DB** (no volumes): sessions die (logins drop),
+  data resets, seeders rebuild. Don't chase "disappeared data" ghosts.
+- **Traefik default cert has no SAN** → Chrome interstitial on every new
+  origin until the user clicks Advanced → Proceed. The CDP `thisisunsafe`
+  bypass does NOT work through the bridge.
+- **Browser-automation login is flaky** (Livewire state sync race): fill →
+  wait 3–6 s → click, and retry. Human login always works. `browser_type`
+  by ref/selector fails with "not a text-editable element" on Filament
+  inputs — use `browser_fill` + `browser_click`, and re-snapshot after
+  every interaction (refs go stale instantly).
+- **Filament tab clicks** work via `browser_query` refs (`q1…`), not
+  always via snapshot refs.
+- **PowerShell → curl JSON**: build bodies as single-quoted strings with
+  `\"` escapes into a variable first; inline `"{`\"…`\"}"` interpolation
+  produces "bad json".
+- **`rg -rn` pitfall**: `-r` is --replace — it silently rewrites matched
+  output text (made method names look like `n()`). Use `-n` alone.
+- **MCP session expires**: re-initialize (`initialize` + `notifications/initialized`)
+  when Coolify tool calls return null.
+- `composer update` in the Dockerfile needs network on cold builds — a
+  packagist connection blip fails the deploy (seen once); just retry.
+- No local PHP/Docker CLI on this machine — runtime verification happens
+  through deploys + the browser bridge, never locally.
 
-Node 4 M3 (automations: trigger + branch/wait/tag/webhook builder) is
-functionally complete in code but **not yet lang-complete, not verified,
-not committed**. `git status` shows 19 files (5 modified, 14 new).
+## Historical (Node 4 build, completed)
 
-### What's built (all written, none tested/executed)
-- **Migrations**: `wa_automations` (trigger_type, trigger_config JSON,
-  steps JSON, status, gym_id/phone_number_id both nullable), `wa_automation_runs`
-  (status, current_step_index, context JSON, resume_at — indexed on
-  `[status, resume_at]` for the resume sweep).
-- **Models**: `WhatsappAutomation` (auto-fills `created_by` like
-  `WhatsappBroadcast` does), `WhatsappAutomationRun`.
-- **`AutomationStepExecutor`** (`app/Services/WhatsApp/`) — executes
-  exactly one step, returns an outcome (`advance`/`jump`/`wait`/`fail`)
-  for the job to act on. Step types: `send_template`, `add_tag`,
-  `remove_tag`, `wait`, `condition` (branches via `true_step`/
-  `false_step` indices), `webhook` (fire-and-forget POST, now correctly
-  checks `$response->failed()` and logs rather than only catching
-  connection-level exceptions — this was a real gap I caught and fixed
-  before the corresponding test would have been testing nothing).
-- **`ProcessWhatsappAutomationRun`** job — the execution loop. Has a
-  **`MAX_STEPS_PER_INVOCATION = 200` safety cap** that fails a run with
-  a clear error if a misconfigured `condition` step loops back on
-  itself, instead of consuming a queue worker forever. A `wait` step
-  ends the job entirely (status → `waiting`, `resume_at` set) rather
-  than using a queue delay, since a wait can be days long and queue
-  delays that long aren't reliable across every driver.
-- **`ResumeWhatsappAutomations`** artisan command (`fitcrm:automations:resume`,
-  scheduled every 5 minutes in `routes/console.php`) — finds `waiting`
-  runs whose `resume_at` has passed and re-dispatches them.
-- **`AutomationTriggerService`** — matches an inbound-message event
-  against active automations (`contact_created`, `keyword_received`,
-  `opted_in`) and starts a run. Wired into `InboundWebhookProcessor`,
-  which now **also recognizes "START" as an opt-in keyword** (the
-  reciprocal of the existing "STOP" opt-out) — added because the
-  `opted_in` trigger needed a real event to fire on, and it's the
-  obvious/expected counterpart to STOP.
-  - **Important correctness fix already applied**: trigger-firing calls
-    were moved to *after* the `DB::transaction()` block in
-    `processInboundMessage()`, not inside it — dispatching a queued job
-    from inside an uncommitted transaction risks a separate queue
-    worker (on a different DB connection, in production with a real
-    queue driver) reading the contact before it's actually committed.
-    The M1/M2 code didn't have this hazard since it didn't dispatch
-    anything from inside that transaction.
-  - Also fixed in passing: the new-contact name extraction used chained
-    array access on a possibly-null value (`$profiles->get($waId)['profile']['name']`),
-    which emits PHP warnings when a payload has no `contacts` array.
-    Switched to `data_get()`.
-- **Filament `WhatsappAutomationResource`**: form is a `Repeater` over
-  `steps` with per-step-type conditionally-visible fields (Select for
-  type, then Select/TextInput fields shown only for the relevant step
-  type). No dedicated create/edit pages — same modal-based pattern as
-  `GymResource`/`DeviceResource`. Has a `view` page (unlike those two)
-  specifically so `RunsRelationManager` (read-only run history) has
-  somewhere to attach — relation managers need a ViewRecord/EditRecord
-  page, they don't work from modal-only actions, which I initially got
-  wrong and had to fix.
-- **Factories**: `WhatsappAutomationFactory`, `WhatsappAutomationRunFactory`.
-- **Tests written** (not executed): `AutomationStepExecutorTest` (all
-  six step types, including the unknown-step-type failure and the
-  no-phone-number failure), `ProcessWhatsappAutomationRunTest`
-  (sequential execution, wait/resume round-trip, **the infinite-loop
-  cap actually tripping**, inactive-automation failure, already-finished
-  run no-op), `ResumeWhatsappAutomationsTest` (due run resumes, future
-  run left alone), `AutomationTriggerIntegrationTest` (contact_created
-  fires for a new contact and not a returning one, keyword_received
-  matches, START both opts in and fires `opted_in`).
-
-### What's NOT done yet — exactly where I stopped
-1. **Lang keys are half-done.** English (`resources/lang/en/app.php`)
-   is complete for M3 (`resources.whatsapp_automations.*` and a large
-   `whatsapp.*` block: triggers, steps, step_types, operators, etc.).
-   Arabic has **only** the `resources.whatsapp_automations.{singular,plural}`
-   pair added so far (I was mid-edit on the ar file when stopped) — it
-   still needs the full `whatsapp.*` block that English has. **Farsi
-   and French have neither yet.** Copy the English key *names* exactly
-   (see `resources/lang/en/app.php`, search for `'trigger' => 'Trigger',`
-   through `'status_updated' =>`) into ar/fa/fr with translated values,
-   the same way M1/M2's lang additions were done — find each locale's
-   equivalent insertion point (same line numbers as English is usually
-   close but not guaranteed after this partial edit; search by
-   surrounding key names, don't assume line numbers).
-2. **Bracket-balance check not re-run since the ar edit landed.** Before
-   doing anything else, run the same sweep used throughout this build:
-   ```
-   for loc in ar en fa fr; do
-     o=$(grep -o "\[" resources/lang/$loc/app.php | wc -l)
-     c=$(grep -o "\]" resources/lang/$loc/app.php | wc -l)
-     echo "$loc: [ =$o  ] =$c"
-   done
-   ```
-   and the PHP brace/paren sweep over `git status --porcelain` files
-   (see any prior commit message for the exact one-liner used).
-3. **`gymie|lubus` grep sweep** — not re-run for M3 files specifically
-   (should be a non-issue since nothing in M3 touches branding, but
-   confirm rather than assume).
-4. **Commit** — once 1–3 are clean, commit as "Node 4 M3: WhatsApp
-   automations (trigger + branch/wait/tag/webhook builder)", matching
-   the detail level of the M1/M2 commit messages: what was built, the
-   two real bugs caught (transaction-timing on trigger dispatch, the
-   webhook step's silent-on-5xx gap), and the loop-safety-cap design
-   decision and why.
-5. **Human Gate for M3** — present a change summary to the user before
-   touching M4, same pattern as M1/M2.
-
-### Design decisions worth restating if asked
-- **Step JSON contract** lives in the `wa_automations` migration's
-  docblock and is authoritatively implemented in
-  `AutomationStepExecutor::execute()` — if the two ever disagree,
-  the executor is the ground truth since it's what actually runs.
-- **`true_step`/`false_step` are raw step-array indices**, not a
-  friendlier reference. Admin has to count position (0-based). This is
-  a real UX rough edge, disclosed rather than hidden — a nicer
-  "click to select target step" UI is a reasonable future improvement,
-  not attempted here given the effort budget.
-- **`context` column on `wa_automation_runs` is currently unused** — no
-  step type reads or writes it yet. Kept as a forward-compatible
-  placeholder (cheap to keep, clearly documents intent) rather than
-  removed, since the plan's step vocabulary may grow to need
-  cross-step state.
-
-## Next session — start here
-1. Re-read the plan file for full Node 4 context if anything here is ambiguous.
-2. Node 4 is functionally complete: M1 (`git log` for the commit),
-   M2 (`f03818c`), M3 (`8124977`), M4 (`5e70cff`). Nothing is
-   uncommitted as of this update.
-3. Run `composer update anthropic-ai/sdk` (or a full `composer update`)
-   before `composer install` will succeed — M4 added a dependency the
-   committed `composer.lock` doesn't know about yet.
-4. Present a combined Human Gate for the whole WhatsApp merge (or just
-   M4, if the user already reviewed M1–M3 separately) before treating
-   Node 4 as done. Once cleared, the only environment this has ever run
-   in is static analysis — the very first real validation should be
-   `composer install && php artisan test` on a machine with PHP 8.2, or
-   the first CI/Coolify build.
-
-## Environment reminders
-- No `php`, `composer`, or `docker` binaries available here — verification is static only (grep-based brace/bracket balance, targeted WebFetch against upstream docs/source for anything version- or API-specific). Say so plainly rather than implying something was tested when it wasn't.
-- `sh` *is* available (Git Bash) — used to lint the two shell scripts (`docker/entrypoint.sh`, `scripts/coolify-deploy.sh`) via `sh -n`, which is real signal, unlike the PHP brace-counting which is just a heuristic.
+Node 4 M1–M4 (WhatsApp foundation, broadcasts, automations, AI assistant +
+knowledge base) are complete — see `git log` for the detailed commit
+messages. Design decisions that still matter:
+- Automation step JSON contract: authoritatively implemented in
+  `AutomationStepExecutor::execute()`; `true_step`/`false_step` are raw
+  0-based step indices (known UX rough edge, disclosed).
+- Shared WhatsApp numbers (`is_shared = true`) land inbound messages
+  unscoped (`gym_id = null`) by design; dedicated numbers are fully
+  branch-scoped.
+- Inbound WhatsApp contacts are NOT auto-linked to Members/Enquiries
+  (deliberate M1 deferral — phone normalization judged too fragile blind);
+  staff link manually.
+- `wa_automation_runs.context` column is an unused forward-compatibility
+  placeholder.
+- Biometric templates stay on the device; only the device↔member mapping
+  is stored (`member_device_identifiers`) — privacy decision, do not
+  "fix" by uploading templates server-side without revisiting the plan.
+- The old in-file blocker notes (memory exhaustion, M1/M3 pick-up-here
+  lists) are all resolved — see git history of this file if needed.
