@@ -73,7 +73,19 @@ class UserForm
                                     ->label(__('app.fields.dob')),
                                 Select::make('role')
                                     ->label(__('app.fields.role'))
-                                    ->relationship('roles', 'name')
+                                    ->relationship(
+                                        'roles',
+                                        'name',
+                                        // Privilege-escalation guard: only
+                                        // super admins may grant (or already
+                                        // have granted) the super_admin role;
+                                        // branch operators never see it.
+                                        modifyQueryUsing: fn (\Illuminate\Database\Eloquent\Builder $query) => auth()
+                                            ->user()
+                                            ?->hasRole('super_admin')
+                                            ? $query
+                                            : $query->where('roles.name', '!=', 'super_admin'),
+                                    )
                                     ->getOptionLabelFromRecordUsing(
                                         fn ($record): string => Str::headline($record->name)
                                     ),
