@@ -21,16 +21,7 @@ class WhatsappBroadcastResource extends Resource
 
     public static function canAccess(): bool
     {
-        $enabled = Helpers::marketingFeatureEnabled('broadcasts');
-
-        // TEMPORARY diagnostic — remove after the Forbidden investigation.
-        error_log('WBC-canAccess ' . json_encode([
-            'enabled' => $enabled,
-            'gym_id' => app(\App\Contracts\TenantContext::class)->gymId(),
-            'marketing' => app(\App\Contracts\SettingsRepository::class)->get()['marketing'] ?? null,
-        ]));
-
-        return $enabled;
+        return Helpers::marketingFeatureEnabled('broadcasts');
     }
 
     public static function getModelLabel(): string
