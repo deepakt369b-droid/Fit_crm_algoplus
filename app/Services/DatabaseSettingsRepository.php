@@ -52,6 +52,20 @@ class DatabaseSettingsRepository implements SettingsRepository
         }
 
         if (app()->runningUnitTests()) {
+            // Unit tests get the bundled example settings UNLESS the branch
+            // already has a persisted row (a seeded testing deployment does —
+            // APP_ENV=testing there must NOT freeze every branch on the
+            // example blob, or Settings saves silently no-op and per-branch
+            // feature flags become impossible to turn on).
+            $row = $this->row();
+
+            if ($row !== null) {
+                $settings = json_decode((string) $row->data, true);
+                $settings = is_array($settings) ? $settings : [];
+
+                return $this->cachedSettings = $this->normalize($settings);
+            }
+
             return $this->cachedSettings = $this->normalize($this->exampleSettings());
         }
 
@@ -66,7 +80,10 @@ class DatabaseSettingsRepository implements SettingsRepository
     {
         $normalized = $this->normalize($settings);
 
-        if (app()->runningUnitTests()) {
+        // Mirror get(): persist when the request has a branch context (a
+        // seeded testing deployment does); fall back to the in-memory
+        // override only for true unit tests with no branch behind them.
+        if (app()->runningUnitTests() && $this->tenantContext->gymId() === null) {
             static::$testOverride = $normalized;
             $this->cachedSettings = $normalized;
 
