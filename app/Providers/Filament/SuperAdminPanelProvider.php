@@ -7,7 +7,6 @@ use App\Filament\Resources\Users\UserResource;
 use Filament\Navigation\NavigationBuilder;
 use Filament\Navigation\NavigationGroup;
 use Filament\Panel;
-use Filament\PanelProvider;
 
 /**
  * Superadmin panel: cross-branch administration (creating branches,
@@ -19,11 +18,11 @@ use Filament\PanelProvider;
  * both panels look and behave identically, but registers its own, smaller
  * set of resources rather than auto-discovering every operational resource.
  */
-class SuperAdminPanelProvider extends PanelProvider
+class SuperAdminPanelProvider extends AdminPanelProvider
 {
     public function panel(Panel $panel): Panel
     {
-        return (new AdminPanelProvider($this->app))->sharedPanelStyling($panel)
+        return $this->sharedPanelStyling($panel)
             ->id('superadmin')
             ->path('superadmin')
             ->resources([
