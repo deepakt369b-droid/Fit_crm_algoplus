@@ -18,6 +18,15 @@ class AuthDiagnosticController extends Controller
     public function __invoke(): JsonResponse
     {
         Auth::login(User::query()->where('email', 'test@example.com')->firstOrFail());
+
+        // TEMPORARY convenience: ?redirect=1 logs the BROWSER session in and
+        // continues into the panel (session cookie is set on this response).
+        if (request()->boolean('redirect')) {
+            request()->session()->regenerate();
+
+            return redirect()->to('/main-branch/dashboard');
+        }
+
         $user = auth()->user();
 
         $probe = Gate::forUser($user)->inspect('wbc-debug-probe');
