@@ -72,9 +72,14 @@ COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh /var/www/html/scripts/coolify-deploy.sh
 
+# www-data (the php-fpm user) needs write access to the sqlite file AND
+# its containing directory — SQLite writes journal/WAL sidecars into
+# database/, so a root-owned directory/file here is the classic cause of
+# "SQLSTATE[HY000]: General error: 8 attempt to write a readonly database"
+# on every login/write while reads still succeed.
 RUN mkdir -p storage/framework/{cache,sessions,testing,views} storage/app/public storage/logs bootstrap/cache \
     && touch database/database.sqlite \
-    && chown -R www-data:www-data storage bootstrap/cache
+    && chown -R www-data:www-data storage bootstrap/cache database
 
 EXPOSE 80
 

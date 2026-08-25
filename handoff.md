@@ -1,3 +1,64 @@
+# FitCRM Build
+
+## Deployment handoff - 2026-08-24
+
+### Current state
+
+- Coolify application UUID: `eu4zxqgxdtqpnaa4kwkwqogo`.
+- Coolify uses the repository `Dockerfile`, exposing port `80`, with health
+  check `/healthz` on port `80`.
+- Commit `cc60618` built successfully and Coolify reported the application as
+  `running:healthy`.
+- Testing configuration was added directly in Coolify: SQLite database, file
+  sessions/cache, synchronous queue, log mailer, and `APP_ENV=testing`.
+- Local testing hostname: `http://fitcrm.127.0.0.1.nip.io`. It is not public
+  and requires the local Coolify Traefik proxy.
+- Testing startup runs `ShieldSeeder` followed by `UserSeeder`.
+- Intended test superadmin: `test@example.com` / `test`.
+
+### Current blocker
+
+The browser reaches the application, but the page reports:
+
+```text
+Fatal error: Allowed memory size of 536870912 bytes exhausted (tried to allocate 262144 bytes)
+```
+
+This is a 512 MB PHP memory exhaustion in Laravel container/bootstrap code,
+not a Docker image build failure. Do not increase memory first. Investigate
+recursive provider/container bootstrapping, especially the interaction between
+`SuperAdminPanelProvider` and `AdminPanelProvider`.
+
+### First tasks tomorrow
+
+1. Inspect container logs and identify the first request path causing the
+  fatal error.
+2. Check whether `SuperAdminPanelProvider::panel()` recursively constructs or
+  boots `AdminPanelProvider`.
+3. As a diagnostic only, remove `SuperAdminPanelProvider` from
+  `bootstrap/providers.php` and verify whether the normal admin panel loads.
+4. Test `php artisan about`, `php artisan route:list`, and `/healthz` inside
+  the container after each change.
+5. Keep `APP_DEBUG=false` after debugging and redeploy with a forced rebuild.
+6. Verify the test login, then remove or change the test account before
+  production.
+
+### Deployment history
+
+| Commit | Deployment | Result |
+|---|---|---|
+| `05153a3` | `xlm0fgyghc7fadknuhbbd7qh` | Composer install failure |
+| `6a38246` | `txza0raiyjf67o3qbi7hxttq` | Composer lock refresh failure |
+| `19923e9` | `rwpr7z65lhhldxw2wgaxebgk` | Provider constructor failure |
+| `1531cb4` | `ygcbvqfffna83cufc3jthqpb` | Container dependency failure |
+| `da57a76` | `ana4c5ck3g9kjz2sr9sg9ngm` | MySQL connection refused |
+| `4d23f6e` | `sa9kizhbaoko2qf8lqcooqft` | SQLite extension build failure |
+| `cc60618` | `rh1dtiv04kqqc3aowba6ypjo` | Image and health check successful |
+| `eccaa26` | `e01gglxmwnlg1xxdcsuxlaip` | Faker seed failure |
+| `df638bb` | `v0llpgtvtbplytqiobjiuwh8` | Missing `super_admin` role |
+| `d88e671` | `nv1erpeau62oi4aflt6ihvpy` | 512 MB memory exhaustion |
+
+Revoke the Coolify API token used during this session before continuing.
 # FitCRM Build — Handoff
 
 > **Update:** Node 4 M1 (below) is now complete and committed — tests,
