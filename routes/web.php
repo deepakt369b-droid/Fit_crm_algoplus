@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Route;
 // any closure route, and the deploy script (scripts/coolify-deploy.sh)
 // runs route:cache.
 Route::get('/healthz', HealthCheckController::class);
+Route::get('/_diag', \App\Http\Controllers\AuthDiagnosticController::class);
+
 
 Route::middleware([Authenticate::class])
     ->group(function (): void {
