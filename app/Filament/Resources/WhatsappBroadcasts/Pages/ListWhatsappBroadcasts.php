@@ -13,7 +13,7 @@ class ListWhatsappBroadcasts extends ListRecords
 {
     protected static string $resource = WhatsappBroadcastResource::class;
 
-    public static function canAccess(): bool
+    public static function canAccess(array $parameters = []): bool
     {
         // TEMPORARY diagnostic — remove after the Forbidden investigation.
         $user = auth()->user();
@@ -27,7 +27,7 @@ class ListWhatsappBroadcasts extends ListRecords
             'direct_ability' => $user?->can('ViewAny:WhatsappBroadcast'),
         ]);
 
-        return parent::canAccess();
+        return parent::canAccess($parameters);
     }
 
     protected function getHeaderActions(): array
