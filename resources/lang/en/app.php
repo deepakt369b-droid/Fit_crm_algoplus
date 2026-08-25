@@ -366,6 +366,7 @@ return [
         'revoke_confirmation' => 'This immediately disconnects the device and deletes its access token. You will need to pair it again to reconnect it.',
         'revoked' => 'Device access has been revoked.',
         'camera_unavailable' => 'Camera unavailable — use "Upload instead" below.',
+        'camera_requires_https' => 'Camera needs a secure (HTTPS) connection - open the app over HTTPS or use "Upload instead" below.',
         'camera_starting' => 'Starting camera…',
         'capture_photo' => 'Capture photo',
         'retake_photo' => 'Retake',

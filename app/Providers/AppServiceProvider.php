@@ -44,6 +44,7 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
@@ -72,6 +73,21 @@ class AppServiceProvider extends ServiceProvider
         if (str_starts_with(Data::string(config('app.url')), 'https://') || $request->isSecure()) {
             URL::forceScheme('https');
         }
+
+        // super_admin bypasses every ability check — the canonical Shield
+        // setup its config already declares (`super_admin.define_via_gate`
+        // + `intercept_gate: before`), which nothing implemented. Without
+        // this, resources without an explicit policy (e.g. the WhatsApp
+        // marketing modules) 403 for super admins because Spatie's gate
+        // default-denies unlisted abilities.
+        Gate::before(function ($user, $ability): ?bool {
+            if (! method_exists($user, 'hasRole')) {
+                return null;
+            }
+
+            return $user->hasRole('super_admin') ? true : null;
+        });
+
         $this->configureApiRateLimiting();
         $this->configureScrambleApiDocs();
 

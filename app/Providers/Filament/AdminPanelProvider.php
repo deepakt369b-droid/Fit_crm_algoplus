@@ -81,6 +81,12 @@ class AdminPanelProvider extends PanelProvider
             ->plugins([FilamentShieldPlugin::make()
                 ->navigationIcon(fn (): null => null)
                 ->activeNavigationIcon(fn (): null => null)]);
+
+        // Roles are global (not per-gym): Spatie's Role model has no `gym`
+        // relation, so the panel's tenant scoping throws a LogicException on
+        // the Shield roles page. Opt the resource out of tenancy — Filament's
+        // own public switch for exactly this case.
+        RoleResource::scopeToTenant(false);
     }
 
     /**

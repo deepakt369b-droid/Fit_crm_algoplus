@@ -154,6 +154,18 @@ Health Check Port: 80
 Health Check Start Period: 60
 ```
 
+## Camera & External Devices (HTTPS required)
+
+The member photo camera (`CameraCapture` form component) uses `getUserMedia`, which browsers only expose in **secure contexts**. On plain HTTP it is silently unavailable — the field now shows a dedicated "camera requires HTTPS" message instead of a generic error.
+
+- **Production:** add your domain in Coolify (Domains field) so Traefik provisions a Let's Encrypt certificate, set `APP_URL=https://your-domain`, and open the app over HTTPS. The app auto-forces HTTPS when `APP_URL` is https.
+- **Local testing:** `http://127.0.0.1.nip.io` is NOT a secure context. Either use `http://localhost` directly, or add the site to `chrome://flags/#unsafely-treat-insecure-origin-as-secure` (testing only).
+- **External device integrations** (attendance devices via `/api/v1/devices/pair` → heartbeat/enrol/check-in) work over plain HTTP but should always run behind HTTPS in production — device pairing tokens are bearer credentials.
+
+## WhatsApp Marketing Modules
+
+Broadcasts, Automations, and Knowledge Base access is feature-flagged **per gym** via Settings (`marketing.broadcasts`, `marketing.automations`, `marketing.knowledge_base`). When disabled, the pages show Forbidden by design — enable them from the Settings page for the branch.
+
 ## Testing Checklist
 
 - [ ] Replace `<generate-a-Laravel-key>` with a generated `APP_KEY`.

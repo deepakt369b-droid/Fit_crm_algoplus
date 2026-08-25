@@ -14,9 +14,20 @@
         stream: null,
         cameraOn: false,
         cameraError: false,
+        cameraInsecure: false,
 
         async startCamera() {
             this.cameraError = false;
+            this.cameraInsecure = false;
+            // getUserMedia only exists in secure contexts (HTTPS, or
+            // localhost). On plain-HTTP origins navigator.mediaDevices is
+            // undefined and the call would throw a generic error — surface
+            // the actionable HTTPS message instead.
+            if (! window.isSecureContext || ! navigator.mediaDevices || ! navigator.mediaDevices.getUserMedia) {
+                this.cameraInsecure = true;
+                this.cameraError = true;
+                return;
+            }
             try {
                 this.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
                 this.$refs.video.srcObject = this.stream;
@@ -79,7 +90,8 @@
         <img x-show="preview" x-bind:src="preview" class="h-full w-full object-cover" alt="{{ __('app.fields.photo') }}" />
 
         <div x-show="!cameraOn && !preview" class="absolute inset-0 flex items-center justify-center p-4 text-center text-sm text-gray-500 dark:text-gray-400">
-            <span x-show="cameraError">{{ __('app.devices.camera_unavailable') }}</span>
+            <span x-show="cameraInsecure">{{ __('app.devices.camera_requires_https') }}</span>
+            <span x-show="cameraError && !cameraInsecure">{{ __('app.devices.camera_unavailable') }}</span>
             <span x-show="!cameraError">{{ __('app.devices.camera_starting') }}</span>
         </div>
     </div>
