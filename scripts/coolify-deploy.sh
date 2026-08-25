@@ -10,6 +10,7 @@ php artisan migrate --force
 if [ "${APP_ENV:-production}" = "testing" ]; then
 	php artisan db:seed --class=ShieldSeeder --force
 	php artisan db:seed --class=UserSeeder --force
+	php artisan db:seed --class=SuperAdminSeeder --force
 	php artisan db:seed --class=MarketingFeaturesSeeder --force
 fi
 php artisan config:cache

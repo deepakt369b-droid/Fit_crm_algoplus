@@ -53,7 +53,8 @@ REDIS_HOST=<redis-hostname>
 REDIS_PASSWORD=null
 REDIS_PORT=6379
 
-MAIL_MAILER=log
+MAIL_MAILER=resend
+RESEND_KEY=re_placeholder_REPLACE_ME
 MAIL_SCHEME=null
 MAIL_HOST=127.0.0.1
 MAIL_PORT=2525
@@ -70,8 +71,8 @@ AWS_USE_PATH_STYLE_ENDPOINT=false
 
 VITE_APP_NAME="${APP_NAME}"
 
-WHATSAPP_APP_SECRET=
-WHATSAPP_VERIFY_TOKEN=
+WHATSAPP_APP_SECRET=placeholder-app-secret
+WHATSAPP_VERIFY_TOKEN=placeholder-verify-token
 ```
 
 ## Hostname Values
@@ -154,6 +155,26 @@ Health Check Port: 80
 Health Check Start Period: 60
 ```
 
+## Placeholder API Template
+
+Every integration below is wired in code and fails gracefully (clean error notifications, no crashes) when given placeholder values. Replace placeholders with real values as you obtain them — no code changes needed.
+
+| Integration | Configured in | Placeholder value | Replace with |
+|---|---|---|---|
+| WhatsApp webhook signature | Coolify env `WHATSAPP_APP_SECRET` | `placeholder-app-secret` | Meta App secret (App dashboard → WhatsApp → API Setup) |
+| WhatsApp webhook verification | Coolify env `WHATSAPP_VERIFY_TOKEN` | `placeholder-verify-token` | Any string you also enter in Meta's webhook config |
+| WhatsApp sending number | In-app: **Phone Numbers → New** | see below | Real Cloud API values |
+| → `display_phone_number` / `verified_name` | Phone Numbers form | `+15550000000` / `Placeholder Number` | Your Meta number + its verified name |
+| → `waba_id` / `phone_number_id` | Phone Numbers form | `PLACEHOLDER_WABA_ID` / `PLACEHOLDER_PHONE_ID` | IDs from Meta App dashboard → WhatsApp → API Setup |
+| → `access_token` | Phone Numbers form | `PLACEHOLDER_ACCESS_TOKEN` | Permanent system-user token with `whatsapp_business_messaging` |
+| WhatsApp webhook callback URL | Meta App dashboard → WhatsApp → Webhooks | — | `https://your-domain/api/v1/webhooks/whatsapp` |
+| Email (Resend) | Coolify env `MAIL_MAILER=resend`, `RESEND_KEY` | `re_placeholder_REPLACE_ME` | Resend API key + verified sending domain |
+| AI assistant (per branch) | In-app: **Settings → Marketing → AI Assistant** | provider + any key string | Real key from Anthropic/OpenAI/Kimi/GLM |
+
+Notes:
+- With placeholder WhatsApp credentials, **Sync templates** and broadcast sends return Meta's authentication error as an in-app notification — expected until real values are entered.
+- Resend requires a verified sending domain; until then password-reset/test mails fail with Resend's domain-verification error.
+
 ## Camera & External Devices (HTTPS required)
 
 The member photo camera (`CameraCapture` form component) uses `getUserMedia`, which browsers only expose in **secure contexts**. On plain HTTP it is silently unavailable — the field now shows a dedicated "camera requires HTTPS" message instead of a generic error.
@@ -172,7 +193,7 @@ Broadcasts, Automations, and Knowledge Base access is feature-flagged **per gym*
 - [ ] Replace `<mysql-hostname>`, `<mysql-password>`, and `<redis-hostname>`.
 - [ ] Confirm MySQL and Redis are reachable from the application network.
 - [ ] Set `APP_URL` to the testing URL.
-- [ ] Keep `MAIL_MAILER=log` for testing unless a test SMTP service is configured.
+- [ ] Set `RESEND_KEY` (real key) once the sending domain is verified in Resend; password-reset mail depends on it.
 - [ ] Leave WhatsApp values blank unless webhook testing is required.
 - [ ] Add persistent storage for `/var/www/html/storage` if uploaded files must survive redeploys.
 - [ ] Redeploy after saving the variables.
