@@ -52,7 +52,14 @@ class ResolvedTenantContext implements TenantContext
 
     private function authenticatedGymId(): ?int
     {
-        $authenticatable = Auth::user();
+        // Avoid starting an auth lookup while the User model itself is being queried.
+        $guard = Auth::guard();
+
+        if (! $guard->hasUser()) {
+            return null;
+        }
+
+        $authenticatable = $guard->user();
 
         if (! $authenticatable instanceof User && ! $authenticatable instanceof Device) {
             return null;

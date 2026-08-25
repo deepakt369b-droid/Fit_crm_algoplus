@@ -103,7 +103,7 @@ class AdminPanelProvider extends PanelProvider
             // dark variant here if one is produced later.
             ->brandLogo('/images/logo.jpg')
             ->darkModeBrandLogo('/images/logo.jpg')
-            ->brandLogoHeight('2.5rem')
+            ->brandLogoHeight('5rem')
             ->favicon('/images/favicon.jpg')
             ->unsavedChangesAlerts()
             ->colors($this->colors())
