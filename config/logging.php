@@ -54,7 +54,11 @@ return [
 
         'stack' => [
             'driver' => 'stack',
-            'channels' => explode(',', env('LOG_STACK', 'single')),
+            // stderr keeps exceptions visible in container log collectors
+            // (Coolify "Logs" tab / MCP get_logs); 'single' alone hides them
+            // inside storage/logs/laravel.log where they can't be reached
+            // from the outside.
+            'channels' => explode(',', env('LOG_STACK', 'single,stderr')),
             'ignore_exceptions' => false,
         ],
 
