@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Role;
 
 /**
  * Testing-deployment fixture for multi-branch verification (handoff Loop 4):
@@ -23,6 +24,10 @@ class BranchSeeder extends Seeder
 
     public function run(): void
     {
+        // ShieldSeeder only creates super_admin; assignRole throws
+        // RoleDoesNotExist unless the role exists first.
+        Role::findOrCreate('branch_staff', 'web');
+
         $branchB = Gym::query()->firstOrCreate(
             ['slug' => 'branch-b'],
             [
