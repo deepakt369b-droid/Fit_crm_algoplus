@@ -4,6 +4,7 @@ use App\Models\Device;
 use App\Models\Gym;
 use App\Models\Member;
 use App\Models\MemberDeviceIdentifier;
+use App\Models\Subscription;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 
@@ -48,7 +49,13 @@ it('rejects an expired pairing code', function (): void {
 it('records a check-in and is idempotent for the same event', function (): void {
     $gym = Gym::factory()->create();
     $device = Device::factory()->for($gym)->create();
-    $member = Member::factory()->for($gym)->create();
+    $member = Member::factory()->for($gym)->create(['status' => 'active']);
+
+    Subscription::factory()->for($member)->create([
+        'start_date' => now()->subDay()->toDateString(),
+        'end_date' => now()->addMonth()->toDateString(),
+        'status' => 'ongoing',
+    ]);
 
     Sanctum::actingAs($device, ['attendance:write']);
 

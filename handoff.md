@@ -88,21 +88,40 @@ fail gracefully (in-app notifications, no crashes).
   4. Confirm the role dropdown no longer offers `super_admin` to
      non-super-admin editors.
 
-### Loop 5 — Gated entry (biometrics + subscription enforcement): **NOT STARTED**
-1. Explicit `allowed/deny + reason` contract in the attendance check-in
-   response (currently returns member status only — deny logic for
-   expired/cancelled subscriptions, branch mismatch, revoked device is not
-   enforced server-side). Files:
-   `app/Http/Controllers/Api/V1/AttendanceController.php`, `DevicesController.php`.
+### Loop 5 — Gated entry (biometrics + subscription enforcement): **~50% done**
+
+5.1 **DONE (2026-08-26, needs deploy + live verification)** — explicit
+allow/deny contract implemented:
+- New `App\Services\GateAccessService` (+ `GateDecision` DTO). Every real-time
+  check-in response now carries `gate: {allowed, reason, message}`. Denials
+  return HTTP **200** (expected outcome for gate hardware; avoids retry loops)
+  and record nothing. Reason codes: `granted | unknown_member |
+  member_inactive | no_subscription | subscription_expired |
+  subscription_not_started | subscription_cancelled | device_revoked`.
+- Subscription rule: a non-cancelled/non-renewed subscription covering today
+  grants entry; renewals handled (expired original + active renewal = allow).
+- Security hardening: `pair()` now deletes all previous tokens before issuing
+  a new one (one live token per device — "revoke + re-pair" fully rotates);
+  both controllers reject any device whose `status !== 'paired'` even if a
+  token survives (defense-in-depth behind the panel's revoke action).
+- Tests: `tests/Feature/Api/GateAccessEnforcementTest.php` (11 cases) +
+  existing idempotency test pinned to an active member w/ subscription.
+- Loop 5.4 audit pass done for pairing/enrol/check-in: pairing codes hashed
+  (sha256) + 15-min expiry + 10/min IP throttle; enrol requires consent,
+  branch-scoped, enum+length validated; attendance index scoped via GymScope.
+  Residual accepted risks: stolen device token can fabricate attendance
+  (inherent; revoke rotates tokens), client-supplied `recognized_at`
+  (offline-replay design, dedupe-hash protected), `sync()` deliberately does
+  not re-evaluate current policy against historical buffered events.
+
+1. ~~Explicit allowed/deny contract~~ → done above.
 2. Mobile kiosk capture page (phone front camera at the gate — HTTPS now
-   available; `CameraCapture` pattern is the reference).
+   available; `CameraCapture` pattern is the reference). **NEXT UP.**
 3. Fingerprint: browsers cannot read sensors — requires native hardware
    path (Android kiosk app or ZKTeco-class SDK). **User must choose the
    hardware family before this half is planned.** Existing schema already
    supports it: `member_device_identifiers.biometric_type` +
    `finger_position`, templates stay on-device by design.
-4. Run a `security-audit` pass over pairing/enrol/check-in (token scope,
-   replay, rate limits) before calling it production-ready.
 
 ### Loop 6 — Production closeout: **NOT STARTED**
 1. Persistent volumes in Coolify for `/var/www/html/database` (SQLite) and

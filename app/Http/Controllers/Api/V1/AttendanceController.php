@@ -10,10 +10,10 @@ use App\Models\Device;
 use App\Models\Member;
 use App\Models\MemberDeviceIdentifier;
 use App\Services\Api\QueryFilters;
+use App\Services\GateAccessService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Validation\ValidationException;
 
 /**
  * Attendance (gate check-in/check-out) endpoints, authenticated as a
@@ -41,6 +41,12 @@ class AttendanceController extends ApiController
 
     /**
      * A single real-time check-in/check-out event from a device.
+     *
+     * The response always carries a `gate` object with an explicit
+     * allowed/deny decision (`allowed`, `reason`, `message`). Denials are
+     * reported as HTTP 200 — an expected outcome for gate hardware, not a
+     * client error that would trigger offline retry loops — and nothing is
+     * recorded for them.
      */
     public function checkIn(AttendanceCheckInRequest $request): JsonResponse
     {
@@ -49,9 +55,12 @@ class AttendanceController extends ApiController
 
         $member = $this->resolveMember($device, $data['device_user_id'] ?? null, $data['member_number'] ?? null);
 
-        if ($member === null) {
-            throw ValidationException::withMessages([
-                'device_user_id' => ['No member matches this identifier on this branch.'],
+        $decision = app(GateAccessService::class)->evaluate($device, $member);
+
+        if (! $decision->allowed()) {
+            return response()->json([
+                'member' => $this->memberSummary($member),
+                'gate' => $decision->toArray(),
             ]);
         }
 
@@ -59,11 +68,8 @@ class AttendanceController extends ApiController
 
         return response()->json([
             'data' => (new AttendanceResource($attendance))->toArray($request),
-            'member' => [
-                'id' => $member->id,
-                'name' => $member->name,
-                'status' => $member->status?->value,
-            ],
+            'member' => $this->memberSummary($member),
+            'gate' => $decision->toArray(),
         ], 201);
     }
 
@@ -154,12 +160,26 @@ class AttendanceController extends ApiController
         return in_array($device->type, ['face', 'fingerprint'], true) ? $device->type : 'face';
     }
 
+    private function memberSummary(?Member $member): ?array
+    {
+        if ($member === null) {
+            return null;
+        }
+
+        return [
+            'id' => $member->id,
+            'name' => $member->name,
+            'status' => $member->status?->value,
+        ];
+    }
+
     private function currentDevice(Request $request): Device
     {
         $device = $request->user();
 
         abort_unless($device instanceof Device, 401);
         abort_unless($device->tokenCan('attendance:write'), 403);
+        abort_unless($device->status === 'paired', 403, 'This device has been revoked.');
 
         return $device;
     }

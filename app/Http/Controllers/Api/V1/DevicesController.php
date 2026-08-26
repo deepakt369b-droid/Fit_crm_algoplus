@@ -51,6 +51,10 @@ class DevicesController extends ApiController
             $device->forceFill(['firmware_version' => $data['firmware_version']])->save();
         }
 
+        // One live token per device: re-pairing invalidates any token a
+        // previous pairing issued, so "revoke + re-pair" fully rotates access.
+        $device->tokens()->delete();
+
         $token = $device->createToken('device:'.$device->id, ['attendance:write'])->plainTextToken;
 
         return response()->json([
@@ -132,6 +136,7 @@ class DevicesController extends ApiController
 
         abort_unless($device instanceof Device, 401);
         abort_unless($device->tokenCan('attendance:write'), 403);
+        abort_unless($device->status === 'paired', 403, 'This device has been revoked.');
 
         return $device;
     }
