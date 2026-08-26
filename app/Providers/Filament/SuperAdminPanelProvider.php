@@ -4,6 +4,7 @@ namespace App\Providers\Filament;
 
 use App\Filament\Resources\Gyms\GymResource;
 use App\Filament\Resources\Users\UserResource;
+use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Navigation\NavigationBuilder;
 use Filament\Navigation\NavigationGroup;
 use Filament\Panel;
@@ -29,6 +30,9 @@ class SuperAdminPanelProvider extends AdminPanelProvider
                 GymResource::class,
                 UserResource::class,
             ])
+            ->plugins([FilamentShieldPlugin::make()
+                ->navigationIcon(fn (): null => null)
+                ->activeNavigationIcon(fn (): null => null)])
             ->navigation(fn (NavigationBuilder $builder) => $builder->groups([
                 NavigationGroup::make(__('app.navigation.groups.administration'))
                     ->icon('heroicon-o-building-office-2')
