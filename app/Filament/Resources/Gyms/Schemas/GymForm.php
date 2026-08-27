@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\Gyms\Schemas;
 
-use Filament\Forms\Components\Grid;
+use Filament\Schemas\Components\Grid;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
